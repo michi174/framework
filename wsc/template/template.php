@@ -278,7 +278,7 @@ class Template
 			}
 			else
 			{
-				$this->notify->addMessage("Include Template (&quot;".$include_file."&quot;) wurde nicht gefunden!", "information");
+				$this->notify->addMessage("Include Template (&rsquo;".$include_file."&rsquo;) wurde nicht gefunden!", "information");
 				$section	= str_replace('{include="'.$include_file.'"}', "INCLUDE_ERROR", $section);
 			}
 			

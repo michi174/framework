@@ -47,17 +47,28 @@ class Request
 		try 
 		{
 			$this->setControllerName();
-			$this->setActionName();
-			
-			$this->controller	= $this->request[$this->getControllerName()];
-			$this->action		= $this->request[$this->getActionName()];
-			
+			$this->setActionName();			
 		}
 		catch (\Exception $e)
 		{
 			echo $e->getMessage() . " in Datei " . $e->getFile() . " : " . $e->getLine() . " <br />";
 			echo $e->getTraceAsString();
-		}		
+		}
+
+		$this->setController();
+		$this->setAction();
+	}
+	
+	private function setController()
+	{
+		$this->controller	= (isset($this->request[$this->getControllerName()])) ? $this->request[$this->getControllerName()] : "";
+		unset($this->request[$this->getControllerName()]);
+		
+	}
+	private function setAction()
+	{
+		$this->action		= (isset($this->request[$this->getActionName()])) ? $this->request[$this->getActionName()] : "";
+		unset($this->request[$this->getActionName()]);
 	}
 	
 	public function getController()
