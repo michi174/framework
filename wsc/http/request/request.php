@@ -1,7 +1,7 @@
 <?php
 
-namespace wsc\http\Request;
-use wsc\config\Config;
+namespace wsc\http\request;
+use wsc\application\application;
 
 /**
  *
@@ -27,22 +27,25 @@ class Request
 	private $actionname		= NULL;
 	private $controllername	= NULL;
 	
-	private $controller	= "start";
+	private $controller	= "index";
 	private $action		= "default";
+	
+	private $application;
 	
 	
 	private $config	= NULL;
 	
-	public function __construct()
+	public function __construct(Application &$application)
 	{
-		$this->cookie	= &$_COOKIE;
-		$this->post		= &$_POST;
-		$this->get		= &$_GET;
-		$this->file		= &$_FILES;
+		$this->application	= $application;
+		$this->cookie		= &$_COOKIE;
+		$this->post			= &$_POST;
+		$this->get			= &$_GET;
+		$this->file			= &$_FILES;
 		
-		$this->request	= array_merge($this->post, $this->get);
+		$this->request		= array_merge($this->post, $this->get);
 		
-		$this->config	= Config::getInstance();
+		$this->config		= $this->application->load("Config");
 		
 		try 
 		{
@@ -52,7 +55,7 @@ class Request
 		catch (\Exception $e)
 		{
 			echo $e->getMessage() . " in Datei " . $e->getFile() . " : " . $e->getLine() . " <br />";
-			echo $e->getTraceAsString();
+			echo nl2br($e->getTraceAsString());
 		}
 
 		$this->setController();
@@ -85,7 +88,7 @@ class Request
 	 * Gibt ein $_GET Arrayelement aus.
 	 * 
 	 * @param mixed $var
-	 * @return multitype:mixed|NULL
+	 * @return multitype: mixed|NULL
 	 */
 	public function get($var)
 	{

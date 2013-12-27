@@ -1,8 +1,7 @@
 <?php
 
 namespace wsc\user;
-use wsc\database\Database;
-use wsc\acl\Acl;
+use wsc\application\Application;
 
 /**
  *
@@ -12,21 +11,23 @@ use wsc\acl\Acl;
 class User
 {
 	private $userid		= NULL;
-	private $db			= NULL;
+	private $db;
+	private $application;
 	
 	public $data		= array();
 	public $groups		= array();
 	public $roles		= array();
 	public $permissions	= array();
 	
-	public function __construct($userid)
+	public function __construct(Application $application, $userid)
 	{
 		if(!is_null($userid))
 			$this->userid	= $userid;
 		else 
 			die('Keine UserID uebergeben');
 		
-		$this->db	= Database::getInstance();
+		$this->application 	= $application;
+		$this->db			= $this->application->load("Database");
 		
 		$this->initUser();
 	}
@@ -118,7 +119,7 @@ class User
 	
 	public function getPermissions()
 	{
-		$acl				= new Acl;
+		$acl				= $this->application->load("Acl");
 		$permissions		= array();
 		$double_permission	= array();
 		

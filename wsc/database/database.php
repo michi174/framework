@@ -30,6 +30,13 @@ class Database extends \mysqli
 		}
 	}
 	
+	/**
+	 * Gibt einen Datensatz einer Tabelle auf Grund der übergebenen ID zurück.
+	 * 
+	 * @param string $table	 Zu durchsuchende Tabelle
+	 * @param int $id		 Zu suchende ID
+	 * @return array $data	 Datensatz der Tabelle
+	 */
 	public function getDataByID($table, $id)
 	{
 		$query	= "SELECT * FROM " . $table . " WHERE id = '". $id ."'";
@@ -39,6 +46,14 @@ class Database extends \mysqli
 		return $data;
 	}
 	
+	/**
+	 * Gibt einen Datensatz einer Tabelle auf Grund des übergebenen Wertes und des zu durchsuchendes Feldes zurück.
+	 * 
+	 * @param string $table	 Zu durchsuchende Tabelle in der Datenbank
+	 * @param string $field	 Das zu durchsuchende Feld in $table
+	 * @param string $value	 Der gesuchte Inhalt von $field
+	 * @return array $data	 Der gesuchte Datensatz
+	 */
 	public function getDataByField($table, $field, $value)
 	{
 		$query	= "SELECT * FROM " . $table . " WHERE " . $field . " = '" . $value . "'";

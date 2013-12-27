@@ -1,9 +1,7 @@
 <?php
-
 namespace wsc\acl;
-use wsc\database\Database as Database;
 use wsc\user\User;
-
+use wsc\application\Application;
 
 /**
  * ACL (2013 - 08 - 21)
@@ -16,18 +14,19 @@ use wsc\user\User;
  * @copyright	2013 - Michael Strasser
  * @license		Alle Rechte vorbehalten.
  */
-
 class Acl
 {
-	private $db		= NULL;
-	private $user	= NULL;
+	private $db;
+	private $user;
+	private $application;
 	
 	private $last_perm	= array();
 	
-	public function __construct($user = NULL)
+	public function __construct(Application &$application, User $user = null)
 	{
-		$this->db		= Database::getInstance();
-		$this->user		= $user;
+		$this->application	= $application;
+		$this->db			= $this->application->load("Database");
+		$this->user			= $user;
 	}
 	
 	public function allow()
@@ -100,13 +99,13 @@ class Acl
 				}
 				else 
 				{
-					die(__CLASS__ ."::".__METHOD__.": Falscher Datentyp bei \$reference");
+					die(__METHOD__.": Falscher Datentyp bei \$reference");
 				}
 				
 			}
 			else
 			{
-				die(__CLASS__ ."::".__METHOD__." kann den Referenztyp nicht feststellen!");
+				die(__METHOD__.": kann den Referenztyp nicht feststellen!");
 			}
 		}
 	}

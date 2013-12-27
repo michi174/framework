@@ -143,23 +143,12 @@ class Template
 	
 	
 	
-	public function __construct($db = NULL)
+	public function __construct()
 	{
 		$this->notify	= new system\SystemNotification("warning");
 		$this->bbcode	= new bbCode\BBCode();
 		$this->config	= config::getInstance();
-		
-		if(!is_null($db))
-		{
-			if($db instanceof database\Database)
-			{
-				$this->db = $db;
-			}
-			else
-			{
-				$this->notify->addMessage("Das Datenbankobjekt konnte nicht initialisiert werden!", "error");
-			}
-		}
+		$this->db		= \wsc\database\Database::getInstance();
 	}
 	
 	
@@ -176,7 +165,6 @@ class Template
 		if(file_exists($file))
 		{
 			$this->output	= file_get_contents($file);
-				
 			return true;
 		}
 		else
@@ -465,7 +453,8 @@ class Template
 			}
 			else
 			{
-				$this->notify->addMessage("<strong>Fehler:</strong> Das Array &rsquo;" . $foreach_name ."&rsquo; wurde nicht definiert.", "error");
+				die($this->output);
+				$this->notify->addMessage("<strong>Fehler:</strong> Das Array &rsquo;" . $foreach_name ."&rsquo; wurde nicht f&uuml;r &rsquo;".$this->templates."&rsquo; definiert.", "error");
 				break;
 			}
 		}

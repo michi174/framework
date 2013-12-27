@@ -2,6 +2,7 @@
 
 namespace wsc\auth;
 use wsc\user\User;
+use wsc\application\Application;
 
 /**
  *
@@ -18,22 +19,18 @@ use wsc\user\User;
  */
 class Auth 
 {
-	private $db			= NULL;
 	private $auth		= NULL;
 	private $account	= NULL;
 	private $cookie		= NULL;
 	private $userid		= NULL;
 	
-	public function __construct($database)
+	private $application;
+	private $db;
+	
+	public function __construct(Application &$application)
 	{
-		if(!is_null($database))
-		{
-			$this->db		= $database;
-		}
-		else
-		{
-			die("Es wurde kein gültiges Datenbankobjekt uebergeben.");
-		}
+		$this->application		= $application;
+		$this->db				= $this->application->load("Database");
 		
 		$this->recognizeUser();
 	}
@@ -294,7 +291,7 @@ class Auth
 	private function newUser()
 	{
 		$_SESSION['recognizedUser'] = true;
-		$_SESSION['user']	= serialize(new User($this->userid));
+		$_SESSION['user']	= serialize(new User($this->application, $this->userid));
 	
 	}
 	
