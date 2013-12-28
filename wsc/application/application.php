@@ -4,6 +4,7 @@ namespace wsc\application;
 use wsc\config\config;
 use wsc\frontcontroller\Frontcontroller;
 use wsc\http\Request\Request;
+use wsc\http\response\response;
 
 /**
  * Application (2013 - 12 - 28)
@@ -21,19 +22,37 @@ class Application
 {
 	private $resources	= array();
 	private static $instance	= 0;
+	private static $object		= null;
 	
-	public function __construct()
+	
+	public static function getInstance()
 	{
-		self::$instance += 1;
-		
-		if(self::$instance > 1)
+		if(self::$object === null)
+		{
+			self::$object	= new Application();
+			
+			return self::$object;
+		}
+		else
+		{
+			return self::$object;
+		}
+	}
+	private function __clone(){}
+	private function __construct()
+	{
+		if(self::$instance == 0)
+		{
+			$this->register("Config", config::getInstance());
+			$this->checkConfig();
+			$this->autostart();
+		}
+		else
 		{
 			echo "Achtung! Es wurden mehrere Instanzen der Application initialisiert.";
 		}
 		
-		$this->register("Config", config::getInstance());
-		$this->checkConfig();
-		$this->autostart();
+		self::$instance += 1;
 	}
 	
 	/**
@@ -57,6 +76,7 @@ class Application
 	private function autostart()
 	{
 		$this->register("Request", new Request($this));					//Request muss vor dem FrontController gestartet werden!
+		$this->register("Response", new response($this));			
 		$this->register("FrontController", new Frontcontroller($this));	//Benötigt ein Request-Objekt in der Applikation.
 	}
 	
@@ -69,7 +89,7 @@ class Application
 	public function register($resource, $object)
 	{
 		$this->resources[strtolower($resource)] = $object;
-		//DEBUG:echo "<br>".$resource." wurde registriert!<br />";
+		//echo "<br>".$resource." wurde registriert!<br />";
 	}
 	
 	/**
@@ -100,13 +120,12 @@ class Application
 		//In Zukunft sollte dieser Teil so aussehen:
 		//-----------------------------------------------------------------------------------
 		//$response = frontroller->run()	//Controller und Action werden übergeben.
-		//$response -> setHeaders(); ...	//Ausgabe kann noch manipuliert werden.
+		//$response -> setHeader(); ...	//Ausgabe kann noch manipuliert werden.
 		//$response -> send(); 				//Ausgabe wird gestartet.
 		
 		//Bis das möglich ist, wird eine der Frontcontroller einfach ausgeführt...
 		//-----------------------------------------------------------------------------------
 		 */
-		
 		$this->load("FrontController")->run();
 		
 	}

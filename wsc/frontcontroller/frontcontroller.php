@@ -179,7 +179,7 @@ class Frontcontroller
 			}
 			else
 			{
-				echo "Der Controller '".$this->controller."' steht auf der Blackliste des SubControllers '".$subController."' und wird deshalb nicht ausgefuehrt.<br />";
+				//DEBUG:echo "Der Controller '".$this->controller."' steht auf der Blackliste des SubControllers '".$subController."' und wird deshalb nicht ausgefuehrt.<br />";
 			}
 		}
 	}
@@ -235,6 +235,26 @@ class Frontcontroller
 	{
 		$this->namespace	= $this->config->get("controller_namespace")."\\".$this->controller."\\";
 		$this->class		= $this->namespace.$this->controller;
+	}
+	
+	/**
+	 * Gibt den verwendetet Controller zurück
+	 * 
+	 * @return string $controller	Der aktive Controller
+	 */
+	public function getActiveController()
+	{
+		return $this->controller;
+	}
+	
+	/**
+	 * Gibt die verwendete Action zurück
+	 *
+	 * @return string $action	Die aktive Action
+	 */
+	public function getActiveAction()
+	{
+		return $this->action;
 	}
 }
 ?>

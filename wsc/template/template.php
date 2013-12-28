@@ -619,6 +619,7 @@ class Template
 	 */
 	public function assign($tpl_vars, $replace = NULL)
 	{
+		
 		if(!empty($tpl_vars))
 		{
 			$this->tpl_vars[$tpl_vars]	= $replace;
@@ -676,7 +677,7 @@ class Template
 	 * Verï¿½ndert den Inhalt der Datarow Variablen mithilfe der ï¿½bergeben Funktion.
 	 *
 	 * @param (string) $var			Zu bearbeitende Variable
-	 * @param (string) $function	Funktion mit der die Variable bearbeitet wird
+	 * @param (string) $function	PHP-Funktion mit der die Variable bearbeitet wird
 	 *
 	 * @since 1.0
 	 */
@@ -739,17 +740,27 @@ class Template
 	
 	
 	/**
-	 * Gibt ein fertiges Template aus.
-	 *
+	 * Gibt ein fertiges Template aus oder gibt den Ausgabestring zurück.
+	 * 
+	 * @param boolean $render	Steuert ob das Template ausgegeben oder zurückgegeben wird.
+	 * @return string $output	Das fertig compilierte Template
 	 * @since 1.0
 	 */	
-	public function display()
+	public function display($render = false)
 	{
+		
 		$this->openTemplate();
 		$this->compileTemplate();
 		$this->notify->printMessage();
 		
-		echo $this->output;
+		if($render === false)
+		{
+			echo $this->output;
+		}
+		else
+		{
+			return $this->output;
+		}
 	}
 }
 ?>
