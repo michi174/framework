@@ -20,18 +20,22 @@ use wsc\http\response\response;
  */
 class Application 
 {
-	private $resources	= array();
+	private $resources			= array();
 	private static $instance	= 0;
 	private static $object		= null;
 	
-	
+	/**
+	 * Singleton Methode, entweder ein neues oder ein bereits bestehendes Anwendungsobjekt zurückgibt.
+	 * 
+	 * @return \wsc\application\Application	Die Applikation.
+	 */
 	public static function getInstance()
 	{
 		if(self::$object === null)
 		{
 			self::$object	= new Application();
-			
 			return self::$object;
+			
 		}
 		else
 		{

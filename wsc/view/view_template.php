@@ -2,7 +2,7 @@
 
 namespace wsc\view;
 
-use wsc\view\view_abstract;
+use wsc\view\View_abstract;
 use wsc\template\Template;
 
 /**
@@ -10,15 +10,22 @@ use wsc\template\Template;
  * @author Michi
  *        
  */
-class view_template extends view_abstract 
+class View_template extends View_abstract 
 {
+	
+	private $is_subcontroller	= false;
 	
 	private $template;
 	
 	
-	public function __construct()
+	public function __construct($subcontroller = false)
 	{
 		parent::__construct();
+		
+		if($subcontroller !== false)
+		{
+			$this->is_subcontroller = $subcontroller;
+		}
 		
 		$this->template		= new Template;
 		$this->setTemplate();
@@ -50,7 +57,14 @@ class view_template extends view_abstract
 		$def_tpl	= $this->application->load("config")->get("DefaultTemplate");
 		$view_path	= $this->application->load("config")->get("view_dir");
 		
-		$controller	= $this->application->load("FrontController")->getActiveController();
+		if(!$this->is_subcontroller)
+		{
+			$controller	= $this->application->load("FrontController")->getActiveController();
+		}
+		else
+		{
+			$controller = $this->is_subcontroller;
+		}
 		
 		if($tpl_path && $def_tpl)
 		{
@@ -66,7 +80,15 @@ class view_template extends view_abstract
 	}
 	private function setTemplateName()
 	{
-		$action	= $this->application->load("FrontController")->getActiveAction();
+		if(!$this->is_subcontroller)
+		{
+			$action	= $this->application->load("FrontController")->getActiveAction();
+		}
+		else
+		{
+			$action	= $this->is_subcontroller;
+		}
+		
 		$this->template->addTemplate($action.".html");
 	}
 	
@@ -79,10 +101,10 @@ class view_template extends view_abstract
 	/**
 	 * (non-PHPdoc)
 	 *
-	 * @see \wsc\view\view_abstract::display()
+	 * @see \wsc\view\view_abstract::render()
 	 *
 	 */
-	public function render() 
+	protected function render() 
 	{
 		return $this->template->display($render = true);
 	}

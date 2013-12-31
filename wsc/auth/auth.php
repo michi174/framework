@@ -35,7 +35,7 @@ class Auth
 		$this->recognizeUser();
 	}
 	
-	public function recognizeUser()
+	private function recognizeUser()
 	{
 		//Ein neuer Benutzer besucht die Website
 		if(!isset($_SESSION['recognizedUser']))

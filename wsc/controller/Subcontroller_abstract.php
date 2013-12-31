@@ -37,7 +37,15 @@ abstract class Subcontroller_abstract
 			echo "SubController &rsquo;".get_class($subController)."&rsquo; erbt nicht von &rsquo;controller_abstract&rsquo; und ist daher kein gueltiger SubController.<br />";
 		}
 		return false;
-	}	
+	}
+	
+	protected function getSubControllerName($object)
+	{
+		$class			= get_class($object);
+		$subcontroller	= explode("\\", $class);
+		
+		return end($subcontroller);
+	}
 }
 
 ?>

@@ -78,36 +78,40 @@ class Acl
 			
 		if(is_string($privilege))
 		{
-			
 			$privilege	= $this->privilegeString2privilegID($privilege);
 		}
 
 		$resourcelink	= $this->getResourceLink($resource, $privilege);
 		
-		if($reference instanceof User)
+		if($resourcelink != false)
 		{
-			return $this->searchPermission($resourcelink, $reference->permissions);
-		}
-		else
-		{
-			if(is_string($reference_type) && ($this->referenceType($reference_type) !== false))
+			if($reference instanceof User)
 			{
-				if(is_numeric($reference))
-				{
-					$permissions	= $this->getPermissionByReference($reference_type, $reference);
-					return $this->searchPermission($resourcelink, $permissions);					
-				}
-				else 
-				{
-					die(__METHOD__.": Falscher Datentyp bei \$reference");
-				}
-				
+				return $this->searchPermission($resourcelink, $reference->permissions);
 			}
 			else
 			{
-				die(__METHOD__.": kann den Referenztyp nicht feststellen!");
+				if(is_string($reference_type) && ($this->referenceType($reference_type) !== false))
+				{
+					if(is_numeric($reference))
+					{
+						$permissions	= $this->getPermissionByReference($reference_type, $reference);
+						return $this->searchPermission($resourcelink, $permissions);
+					}
+					else
+					{
+						die(__METHOD__.": Falscher Datentyp bei \$reference");
+					}
+			
+				}
+				else
+				{
+					die(__METHOD__.": kann den Referenztyp nicht feststellen!");
+				}
 			}
 		}
+		
+		return true;
 	}
 	
 	/**
@@ -116,35 +120,18 @@ class Acl
 	 * @return (bool) true oder (bool) false
 	 * @since 1.0
 	 */
-	public function checkResourcelink($resource = NULL, $privilege = NULL)
-	{		
-		if(is_null($privilege) && is_null($resource))
-		{
-			if(isset($_GET[DEFAULT_LINK]))
-			{
-				$resource	= $_GET[DEFAULT_LINK];
-				
-				if(isset($_GET[DEFAULT_ACTION]))
-				{
-					$privilege	= $_GET[DEFAULT_ACTION];
-				}
-			}
-		}
+	public function checkResourcelink($resource, $privilege)
+	{
+		$privilege	= $this->privilegeString2privilegID($privilege);
+		$resource	= $this->resourceString2resourceID($resource);
 		
-		if(!is_null($privilege) && !is_null($resource))
+		$right		= $this->getResourceLink($resource, $privilege);
+		
+		if($right !== false)
 		{
-			$privilege	= $this->privilegeString2privilegID($privilege);
-			$resource	= $this->resourceString2resourceID($resource);
+			$this->last_resourcelink = $right['id'];
 			
-			
-			$right		= $this->getResourceLink($resource, $privilege);
-			
-			if($right !== false)
-			{
-				$this->last_resourcelink = $right['id'];
-				
-				return true;
-			}
+			return true;
 		}
 		return false;
 	}

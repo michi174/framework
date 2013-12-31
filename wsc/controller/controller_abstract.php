@@ -1,7 +1,5 @@
 <?php
 namespace wsc\controller;
-
-use wsc\http\Request\Request;
 use wsc\application\Application;
 /** 
  * @author Michi
@@ -12,6 +10,12 @@ abstract class controller_abstract
 	protected $application;
 	protected $request;
 	
+	/**
+	 * Überprüft, ob ein gültiger Controller aufgerufen wird.
+	 * 
+	 * @param resource $controller	Das zu prüfende Controller Objekt.
+	 * @return boolean
+	 */
 	public static function isValidController($controller)
 	{
 		if($controller instanceof controller_abstract)

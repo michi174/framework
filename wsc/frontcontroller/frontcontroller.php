@@ -1,18 +1,16 @@
 <?php
 
 namespace wsc\frontcontroller;
-use wsc\config\Config;
-use wsc\http\Request\Request;
-use wsc\application\Application;
+
 use wsc\controller\controller_abstract;
-use wsc\autoload\Autoload;
 use wsc\controller\Subcontroller_abstract;
+use wsc\application\Application;
 
 /**
  *
  * Request (2013 - 12 - 16)
  * 
- * Der Frontcontroller ruft den zum Request gehörenden Controller auf.
+ * Der Frontcontroller ruft den zum Request gehörenden Controller auf und verarbeitet die SubController.
  * 
  * @author 		Michael Strasser
  * @name 		Frontcontroller
@@ -76,19 +74,42 @@ class Frontcontroller
 	{
 		$this->formClassName();
 		
-		$this->runSubControllers(true);
-		
 		$controller	= new $this->class($this->application);
+		
+		$acl		= $this->application->load("Acl");
+		$user		= $this->application->load("Auth")->getUser();
+		
+		//SubController vor MainController ausführen.
+		$this->runSubControllers(true);
+
 		if(controller_abstract::isValidController($controller))
 		{
-			$controller->{$this->action.self::ACTION_SUFFIX}();
-			
-			$this->runSubControllers(false);
+			//Berechtigung überprüfen
+			if($acl->hasPermission($user, $this->controller, $this->action))
+			{
+				//MainController ausführen
+				$controller->{$this->action.self::ACTION_SUFFIX}();
+			}
+			else 
+			{
+				/**
+				 * TODO: 	Über ein Internal Redirect lösen, da die HTML Konstruktions bei vorzeitiger ausgabe von Text nicht
+				 * 			mehr valide ist. Chrome erzeugt selbstständig HTML, HEAD und BODY Tags bei dieser Ausgabe.
+				 * 			Die SubController werden erst danach geladen -> dh der SubController Head wandert in den bereits erstellten
+				 * 			Body Tag.
+				 */
+				echo "Keine Berechtigung um diese Seite anzuzeigen.";
+			}
 		}
 		else
 		{
 			die("Es wurde ein unzulaessiger Controller '".$this->controller."' ermittelt. Die Application wird beendet...");
 		}
+		
+		//SubController nach MainController ausführen.
+		$this->runSubControllers(false);
+		
+		$this->application->load("response")->send();
 	}
 	
 	

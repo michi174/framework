@@ -1,7 +1,7 @@
 <?php
 
 namespace wsc\http\request;
-use wsc\application\application;
+use wsc\application\Application;
 
 /**
  *
@@ -62,23 +62,39 @@ class Request
 		$this->setAction();
 	}
 	
+	/**
+	 * Filtert den Controller aus dem Request heraus.
+	 */
 	private function setController()
 	{
 		$this->controller	= (isset($this->request[$this->getControllerName()])) ? $this->request[$this->getControllerName()] : "";
 		unset($this->request[$this->getControllerName()]);
 		
 	}
+	/**
+	 * Filtert die Action aus den Request heraus.
+	 */
 	private function setAction()
 	{
 		$this->action		= (isset($this->request[$this->getActionName()])) ? $this->request[$this->getActionName()] : "";
 		unset($this->request[$this->getActionName()]);
 	}
 	
+	/**
+	 * Gibt den aktuell verwendeten Controller zurück.
+	 * 
+	 * @return string	Der aktuelle Controller
+	 */
 	public function getController()
 	{
 		return $this->controller;
 	}
 	
+	/**
+	 * Gib die aktuell verwendete Action zurück.
+	 * 
+	 * @return (string) 	Die aktuelle Action
+	 */
 	public function getAction()
 	{
 		return $this->action;
@@ -102,9 +118,9 @@ class Request
 	
 	
 	/**
-	 * Gibt ein $_POST Arrayelement aus.
+	 * Gibt ein $_POST Arrayelement zurück.
 	 *
-	 * @param mixed $var
+	 * @param mixed $var	Das gewünschte POST Element.
 	 * @return multitype:mixed|NULL
 	 */
 	public function post($var)

@@ -1,6 +1,7 @@
 <?php
 namespace wsc\functions\tools;
 
+use wsc\application\Application;
 class Tools
 {
 	/**
@@ -23,6 +24,14 @@ class Tools
 			}
 		}
 		return false;
+	}
+	
+	public static function internalRedirect($controller, $action)
+	{
+		$app	= Application::getInstance();
+		$cfg	= $app->load("config");
+		
+		$app->load("Response")->redirect("?".$cfg->get("ControllerName")."=". $controller ."&".$cfg->get("ActionName")."=".$action);
 	}
 }
 

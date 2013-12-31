@@ -2,7 +2,6 @@
 namespace wsc\template;
 use wsc\systemnotification as system;
 use wsc\bbcode as bbCode;
-use wsc\database as database; 
 use wsc\config\config;
 
 /**
@@ -453,7 +452,6 @@ class Template
 			}
 			else
 			{
-				die($this->output);
 				$this->notify->addMessage("<strong>Fehler:</strong> Das Array &rsquo;" . $foreach_name ."&rsquo; wurde nicht f&uuml;r &rsquo;".$this->templates."&rsquo; definiert.", "error");
 				break;
 			}

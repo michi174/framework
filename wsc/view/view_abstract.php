@@ -7,7 +7,7 @@ use wsc\application\Application;
  * @author Michi
  *        
  */
-abstract class view_abstract 
+abstract class View_abstract 
 {
 	protected $application;
 	/**
@@ -21,7 +21,7 @@ abstract class view_abstract
 		$this->application = Application::getInstance();
 	}
 	
-	abstract public function render();
+	abstract protected function render();
 	
 	final public function display()
 	{
@@ -29,7 +29,7 @@ abstract class view_abstract
 		$response	= $this->application->load("Response");
 		
 		$response->addContent($content);
-		$response->send();
+		//$response->send();
 	}
 }
 
