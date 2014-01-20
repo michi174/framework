@@ -14,18 +14,17 @@ class View_template extends View_abstract
 {
 	
 	private $is_subcontroller	= false;
-	
 	private $template;
 	
 	
-	public function __construct($subcontroller = false)
+	public function __construct($is_subcontroller = false)
 	{
-		parent::__construct();
+		parent::__construct($is_subcontroller);
 		
-		if($subcontroller !== false)
-		{
-			$this->is_subcontroller = $subcontroller;
-		}
+		$this->setRenderer(array(
+			'name'		=> 'TEMPLATE',
+			'extension'	=> 'html'
+		));
 		
 		$this->template		= new Template;
 		$this->setTemplate();
@@ -51,45 +50,11 @@ class View_template extends View_abstract
 	
 	private function setTemplateDir()
 	{
-		$doc_root	= $this->application->load("config")->get("doc_root");
-		$proj_path	= $this->application->load("config")->get("project_dir");
-		$tpl_path	= $this->application->load("config")->get("template_dir");
-		$def_tpl	= $this->application->load("config")->get("DefaultTemplate");
-		$view_path	= $this->application->load("config")->get("view_dir");
-		
-		if(!$this->is_subcontroller)
-		{
-			$controller	= $this->application->load("FrontController")->getActiveController();
-		}
-		else
-		{
-			$controller = $this->is_subcontroller;
-		}
-		
-		if($tpl_path && $def_tpl)
-		{
-			$path	= $doc_root."/".$proj_path."/".$tpl_path."/".$def_tpl."/".$view_path."/".$controller;
-		}
-		else
-		{
-			die(__METHOD__ . ": die Eigenschaften template_dir und DefaultTemplate muessen in der Config eingestellt werden.");
-		}
-		
-		$this->template->setTemplateDir($path);
-		
+		$this->template->setTemplateDir($this->getViewDir());
 	}
 	private function setTemplateName()
 	{
-		if(!$this->is_subcontroller)
-		{
-			$action	= $this->application->load("FrontController")->getActiveAction();
-		}
-		else
-		{
-			$action	= $this->is_subcontroller;
-		}
-		
-		$this->template->addTemplate($action.".html");
+		$this->template->addTemplate($this->getViewFileName().".html");
 	}
 	
 	private function setTemplate()
@@ -104,8 +69,9 @@ class View_template extends View_abstract
 	 * @see \wsc\view\view_abstract::render()
 	 *
 	 */
-	protected function render() 
+	public function render($content) 
 	{
+		$this->template->setContentToRender($content);
 		return $this->template->display($render = true);
 	}
 }

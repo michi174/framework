@@ -1,6 +1,7 @@
 <?php
 namespace wsc\pluginmanager;
 use wsc\database as database;
+use wsc\application\Application;
 /**
  * PluginManager (2013 - 03 - 02)
  *
@@ -43,6 +44,7 @@ class PluginManager
 	protected function getRegisteredPlugins()
 	{
 		$db		= new database\Database();
+		$config	= Application::getInstance()->load("Config");
 		
 		$sql	= "SELECT plugin_name FROM areas";
 		$res	= $db->query($sql) or die("SQL-Fehler in Datei: " . __FILE__ . ":" . __LINE__ . "<br /><br />" . $db->error);

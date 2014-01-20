@@ -5,6 +5,7 @@ namespace wsc\frontcontroller;
 use wsc\controller\controller_abstract;
 use wsc\controller\Subcontroller_abstract;
 use wsc\application\Application;
+use wsc\functions\tools\Tools;
 
 /**
  *
@@ -24,6 +25,7 @@ class Frontcontroller
 	const ACTION_SUFFIX	= "_action";
 	
 	private $controller;
+	private $subcontroller;
 	private $action;
 	
 	private $subControllers	= array();
@@ -74,7 +76,7 @@ class Frontcontroller
 	{
 		$this->formClassName();
 		
-		$controller	= new $this->class($this->application);
+		$controller	= new $this->class();
 		
 		$acl		= $this->application->load("Acl");
 		$user		= $this->application->load("Auth")->getUser();
@@ -88,17 +90,11 @@ class Frontcontroller
 			if($acl->hasPermission($user, $this->controller, $this->action))
 			{
 				//MainController ausführen
-				$controller->{$this->action.self::ACTION_SUFFIX}();
+				$controller->sendView($controller->{$this->action.self::ACTION_SUFFIX}());
 			}
 			else 
 			{
-				/**
-				 * TODO: 	Über ein Internal Redirect lösen, da die HTML Konstruktions bei vorzeitiger ausgabe von Text nicht
-				 * 			mehr valide ist. Chrome erzeugt selbstständig HTML, HEAD und BODY Tags bei dieser Ausgabe.
-				 * 			Die SubController werden erst danach geladen -> dh der SubController Head wandert in den bereits erstellten
-				 * 			Body Tag.
-				 */
-				echo "Keine Berechtigung um diese Seite anzuzeigen.";
+				Tools::internalRedirect("error", "nopermission", array("next" => urlencode($_SERVER['QUERY_STRING'])));
 			}
 		}
 		else
@@ -127,6 +123,20 @@ class Frontcontroller
 		$this->subControllers[$subcontroller]	= $blacklist;
 	}
 	
+	private function setActiveSubController($subcontroller)
+	{
+		$this->subcontroller	= $subcontroller;
+	}
+	
+	/**
+	 * Gibt den aktuell geöffneten SubController zurück.
+	 * 
+	 * @return string SubController
+	 */
+	public function getActiveSubController()
+	{
+		return $this->subcontroller;
+	}
 	
 	/**
 	 * Führt die SubController aus.
@@ -156,12 +166,14 @@ class Frontcontroller
 					//Ist der SubController gültig?
 					if(Subcontroller_abstract::isValidSubController($object))
 					{
+						$this->setActiveSubController($subController);
+						
 						if($beforeMainController === true)
 						{
 							//Alle SubController die vor dem MainConroller ausgeführt werden müssen, werden gestartet.
 							if(method_exists($object, "runBeforeMain"))
 							{
-								$object->runBeforeMain();
+								$object->sendView($object->runBeforeMain());
 								
 								//Gibt es noch Funktionen, die dannach ausgeführt werden müssen?
 								if(!method_exists($object, "runAfterMain"))
@@ -179,7 +191,7 @@ class Frontcontroller
 						{
 							if(method_exists($object, "runAfterMain"))
 							{
-								$object->runAfterMain();
+								$object->sendView($object->runAfterMain());
 								unset($this->subControllers[$subController]);
 							}
 							else

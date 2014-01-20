@@ -169,8 +169,10 @@ class SystemNotification
 	 *
 	 * @since 1.0
 	 */
-	function printMessage()
-	{		
+	function printMessage($return = false)
+	{
+		$content	= null;
+		
 		foreach($this->types as $type)
 		{
 			$template_dir	= "template/win8_style/templates";
@@ -190,9 +192,17 @@ class SystemNotification
 			
 			if(!empty($this->message[$type]))
 			{
-				$notification->display();
+				if($return == true)
+				{
+					$content	.= $notification->display(true);
+				}
+				else
+				{
+					$notification->display();
+				}
 			}
 		}
+		return $content;
 	}
 }
 

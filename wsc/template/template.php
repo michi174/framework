@@ -1,8 +1,8 @@
 <?php
 namespace wsc\template;
-use wsc\systemnotification as system;
 use wsc\bbcode as bbCode;
 use wsc\config\config;
+use wsc\application\Application;
 
 /**
  * Template (2013 - 03 - 14)
@@ -128,10 +128,10 @@ class Template
 	
 	
 	/**
-	 * @var (object) $notify	Benachrichtigungs Objekt
+	 * @var (object) $debug	Benachrichtigungs Objekt
 	 * @since 1.0
 	 */
-	protected $notify		= NULL;
+	protected $debug		= NULL;
 	
 	
 	/**
@@ -140,11 +140,11 @@ class Template
 	 */
 	protected $bbcode		= NULL;
 	
-	
+	protected $hidden_data	= array();
 	
 	public function __construct()
 	{
-		$this->notify	= new system\SystemNotification("warning");
+		$this->debug	= Application::getInstance()->load("debugger");
 		$this->bbcode	= new bbCode\BBCode();
 		$this->config	= config::getInstance();
 		$this->db		= \wsc\database\Database::getInstance();
@@ -168,11 +168,15 @@ class Template
 		}
 		else
 		{
-			$this->notify->addMessage("Das Template &rsquo;" . $file . "&rsquo; wurde nicht gefunden!","error");
+			$this->debug->log("Das Template &rsquo;" . $file . "&rsquo; wurde nicht gefunden!");
 			return false;
 		}
 	}
 	
+	public function setContentToRender($content)
+	{
+		$this->output	= $content;
+	}
 	
 	/**
 	 * Kompiliert ein Template
@@ -182,10 +186,8 @@ class Template
 	 */
 	protected function compileTemplate()
 	{
-		$this->replaceFunctions();
 		$this->replaceVariables();
-		
-		$this->output	= $this->parseIf($this->output);
+		$this->replaceFunctions();
 	}
 	
 	
@@ -214,10 +216,51 @@ class Template
 	 */
 	protected function replaceFunctions()
 	{
-		$this->output	= $this->replaceIncludes($this->output);
-		$this->replaceForeach();
-		$this->multiDatarow();
+		$this->output	= $this->replaceIncludes($this->output);	
+		
+		//Alle Foreach und Datarows verstecken.
+		$this->hideData();
+		//IF Parsing ausführen
 		$this->output	= $this->parseArrayKeys($this->output);
+		$this->output	= $this->parseIf($this->output);
+		//Versteckte Daten wieder anzeigen.
+		$this->restoreData();
+		
+		if(!is_null($this->db))
+		{
+			$this->multiDatarow();
+		}
+		//Foreach ersetzen
+		$this->replaceForeach();
+		$this->output	= $this->parseIf($this->output);
+		
+	}
+	
+	protected function hideData()
+	{
+		$pattern_foreach	= '#\{foreach[\s]{1}(.+)[\s]{1}key=(.+)[\s]{1}value=(.*)\}(.*)\{\/foreach\}#ismU';
+		$pattern_datarow	= '#\{datarow[\s]{1}([\w]+)\}(.*)\{\/datarow\}#ismU';
+		
+		$matches	= array();
+		$key		= 0;
+		while(preg_match($pattern_foreach, $this->output, $matches) || preg_match($pattern_datarow, $this->output, $matches))
+		{
+			$key 	+= 1;
+			$token_val	= $matches[0];
+			$token_key	= 'internalToken_'.$key;
+			
+			$this->hidden_data[$token_key]	= $token_val;
+			
+			$this->output	= str_replace($token_val, "{".$token_key."}", $this->output);			
+		}
+	}
+	
+	protected function restoreData()
+	{
+		foreach ($this->hidden_data as $token_key => $token_val)
+		{			
+			$this->output	= str_replace("{".$token_key."}", $token_val, $this->output);
+		}
 	}
 	
 	/**
@@ -265,7 +308,8 @@ class Template
 			}
 			else
 			{
-				$this->notify->addMessage("Include Template (&rsquo;".$include_file."&rsquo;) wurde nicht gefunden!", "information");
+				$this->debug->log("Include Template (&rsquo;".$include_file."&rsquo;) wurde nicht gefunden!");
+				
 				$section	= str_replace('{include="'.$include_file.'"}', "INCLUDE_ERROR", $section);
 			}
 			
@@ -300,15 +344,21 @@ class Template
 			$else_block		= (isset($matches[3]) && substr($matches[3],0,6) == $this->delimeter_left."else".$this->delimeter_right) ? $matches[4] : null;
 			$output_block	= null;
 			
-			
 			//ï¿½berprï¿½fen, ob noch nicht ersetzte Variablen vorhanden sind.
-			$condition_pattern	= '#(\{.+\})#ismU';
-			$condition_matches	= array();
+			$condition_pattern		= '#(\{.+\})#ismU';
+			$condition_matches		= array();
 			
 			if(preg_match($condition_pattern, $condition, $condition_matches) == true)
 			{
-				$this->notify->addMessage("<strong>Syntaxfehler:</strong> Die Templatevariable &rsquo;".$condition_matches[1]."&rsquo; wurde nicht deklariert!<br /><br />Der IF-ELSE Block kann nicht richtig ausgef&uuml;hrt werden.", "error");
-				$output_block	= "IF_ELSE_ERROR";
+				$condition_unreplaced_var	= substr($condition_matches[1], 1, strlen($condition_matches[1])-2);
+				
+				if(!isset($this->tpl_vars[$condition_unreplaced_var]) || !is_array($this->tpl_vars[$condition_unreplaced_var]))
+				{
+					$this->debug->log("Syntaxfehler: Die Templatevariable &rsquo;".$condition_matches[1]."&rsquo; wurde nicht deklariert! Der IF-ELSE Block kann nicht richtig ausgef&uuml;hrt werden.");
+					$output_block	= "IF_ELSE_ERROR";
+
+				}
+
 			}
 			else
 			{
@@ -373,13 +423,13 @@ class Template
 				}
 				else
 				{
-					$this->notify->addMessage("<strong>Warnung:</strong> Undefinierter Arraykey &rsquo;" . $array_keys_key . "&rsquo; in Array &rsquo;" . $array_keys_array . "&rsquo;");
+					$this->debug->log("<strong>Warnung:</strong> Undefinierter Arraykey &rsquo;" . $array_keys_key . "&rsquo; in Array &rsquo;" . $array_keys_array . "&rsquo;");
 					break;
 				}
 			}
 			else
 			{
-				$this->notify->addMessage("<strong>Fehler:</strong> &rsquo;" . $array_keys_array . "&rsquo; ist kein Array.", "error");
+				$this->debug->log("<strong>Fehler:</strong> &rsquo;" . $array_keys_array . "&rsquo; ist kein Array.");
 				break;
 			}
 		}
@@ -404,10 +454,11 @@ class Template
 			$foreach_value	= $foreach[3];
 			$foreach_repeat	= $foreach[4];
 			
+			$foreach_compiled_dataset	= array();
+			
 			if(array_key_exists($foreach_name, $this->tpl_vars) && is_array($this->tpl_vars[$foreach_name]))
 			{
 				$foreach_array				= $this->tpl_vars[$foreach_name];
-				$foreach_compiled_dataset	= array();
 				
 				if($foreach_value != "_NULL")
 				{
@@ -425,6 +476,7 @@ class Template
 						{
 							$this->assign($foreach_value, $value);
 							$foreach_compiled_dataset[$array_key]	= $this->parseArrayKeys($foreach_compiled_dataset[$array_key]);
+							$foreach_compiled_dataset[$array_key]	= $this->parseIf($foreach_compiled_dataset[$array_key]);
 						}
 					}
 				}
@@ -434,7 +486,7 @@ class Template
 					{
 						if(is_array($key))
 						{
-							$this->notify->addMessage("<strong>Hinweis:</strong> Es werden keine mehrdimensionalen Arrays im Template unterst&uuml;tzt.<br>", "information");
+							$this->debug->log("<strong>Hinweis:</strong> Es werden keine mehrdimensionalen Arrays im Template unterst&uuml;tzt.<br>");
 							$value	= "(array)";
 						}else 
 						{
@@ -445,16 +497,15 @@ class Template
 						}
 					}
 				}
-				
-				$replace_dataset		= implode("", $foreach_compiled_dataset);
-				$foreach_pattern_all	= '#\{foreach '.$foreach_name.' key='.$foreach_key.' value='.$foreach_value.'\}.*\{\/foreach\}#ismU';
-				$this->output			= preg_replace($foreach_pattern_all, $replace_dataset, $this->output);
 			}
 			else
 			{
-				$this->notify->addMessage("<strong>Fehler:</strong> Das Array &rsquo;" . $foreach_name ."&rsquo; wurde nicht f&uuml;r &rsquo;".$this->templates."&rsquo; definiert.", "error");
-				break;
+				$this->debug->log("Fehler: Das Array &rsquo;" . $foreach_name ."&rsquo; wurde nicht f&uuml;r &rsquo;".$this->templates."&rsquo; definiert.");
 			}
+			
+			$replace_dataset		= implode("", $foreach_compiled_dataset);
+			$foreach_pattern_all	= '#\{foreach '.$foreach_name.' key='.$foreach_key.' value='.$foreach_value.'\}.*\{\/foreach\}#ismU';
+			$this->output			= preg_replace($foreach_pattern_all, $replace_dataset, $this->output);
 		}
 	}
 	
@@ -510,11 +561,12 @@ class Template
 						preg_match_all($subrow_pattern, $datarow_compiled_dataset[$datarow_name][$datarow_compiled_dataset_array_key], $subrow_matches[$datarow_name]);
 						$subrow_names[$datarow_name]	= $subrow_matches[$datarow_name][1];
 						$subrow_inhalte[$datarow_name]	= $subrow_matches[$datarow_name][2];
+						
 						foreach($subrow_names[$datarow_name] as $subrow_key => $subrow_name)
 						{
 							//Wenn die Subrow im Hauptprogramm deklariert wurde
 							if(array_key_exists($subrow_name, $this->subrows[$datarow_name]))
-							{	
+							{
 								//SQL-Befehl fï¿½r Subrow kompilieren.
 								foreach($this->datarow_vars[$datarow_name] as $datarow_var => $datarow_var_inhalt)
 								{		
@@ -559,7 +611,7 @@ class Template
 							}
 							else
 							{
-								$this->notify->addMessage("Subrow &rsquo;".$subrow_name."&rsquo; wurde nicht definiert.");
+								$this->debug->log("Subrow &rsquo;".$subrow_name."&rsquo; wurde nicht definiert.");
 							}
 						}
 						$datarow_compiled_dataset_array_key++;
@@ -576,7 +628,7 @@ class Template
 			}
 			else
 			{
-				$this->notify->addMessage("Datarow &rsquo;" . $datarow_name . "&rsquo; wurde nicht definiert.", "information");
+				$this->debug->log("Datarow &rsquo;" . $datarow_name . "&rsquo; wurde nicht definiert.", "information");
 			}
 		}
 	}
@@ -709,7 +761,7 @@ class Template
 		}
 		else
 		{
-			$this->notify->addMessage("Templateverzeichnis wurde nicht angegeben!", "error");
+			$this->debug->log("Templateverzeichnis wurde nicht angegeben!");
 			return false;
 		}
 	}
@@ -746,10 +798,8 @@ class Template
 	 */	
 	public function display($render = false)
 	{
-		
 		$this->openTemplate();
 		$this->compileTemplate();
-		$this->notify->printMessage();
 		
 		if($render === false)
 		{

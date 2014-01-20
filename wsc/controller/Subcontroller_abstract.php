@@ -1,13 +1,14 @@
 <?php
 namespace wsc\controller;
-
 /**
  *
  * @author Michi
  *        
  */
-abstract class Subcontroller_abstract 
+abstract class Subcontroller_abstract extends BaseController
 {
+	//protected $view;
+	
 	/**
 	 * Überprüft, ob ein SubController gültig ist.
 	 * 

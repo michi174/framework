@@ -1,11 +1,12 @@
 <?php
 namespace wsc\controller;
 use wsc\application\Application;
+use wsc\view\View_abstract;
 /** 
  * @author Michi
  * 
  */
-abstract class controller_abstract 
+abstract class controller_abstract extends BaseController
 {	
 	protected $application;
 	protected $request;
@@ -29,9 +30,9 @@ abstract class controller_abstract
 		}
 	}
 	
-	public function __construct(Application $application)
+	public function __construct()
 	{
-		$this->application	= $application;
+		$this->application	= Application::getInstance();
 		$this->request		= $this->application->load("request");
 	}
 	

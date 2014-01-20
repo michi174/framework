@@ -24,6 +24,8 @@ class Auth
 	private $cookie		= NULL;
 	private $userid		= NULL;
 	
+	private $errors		= NULL;
+	
 	private $application;
 	private $db;
 	
@@ -60,20 +62,32 @@ class Auth
 		$this->auth		= $auth;
 		$this->cookie	= $cookie;
 		
+		
 		$this->checkUserData();
-		$this->checkAccountBans();
-		$this->checkAccountActivated();
 		
-		$_SESSION['loggedIn']	= true;
-		$_SESSION['userid']		= $this->userid;
-		
-		if($this->cookie === true)
+		if(empty($this->errors))
 		{
-			$this->setLoginCookie();
+			$this->checkAccountBans();
+			$this->checkAccountActivated();
+		}
+
+		if(empty($this->errors))
+		{
+			$_SESSION['loggedIn']	= true;
+			$_SESSION['userid']		= $this->userid;
+			
+			if($this->cookie === true)
+			{
+				$this->setLoginCookie();
+			}
+			
+			$this->newUser();
+			$this->writeLoginProtocol();
+			
+			return true;
 		}
 		
-		$this->newUser();
-		$this->writeLoginProtocol();
+		return false;
 	}
 	
 	public function logout()
@@ -141,12 +155,12 @@ class Auth
 			elseif($num == 0)
 			{
 				$this->logout();
-				//throw new Exception\LoginErrorException("Login fehlgeschlagen. Cookie fehlerhaft.");
+				$this->addError("Login fehlgeschlagen. Cookie fehlerhaft.");
 			}
 			elseif($num > 1)
 			{
 				$this->logout();
-				//throw new Exception\LoginErrorException("Login fehlgeschlagen - Sicherheitsrisiko endeckt! Bitte manuell einloggen.");
+				$this->addError("Login fehlgeschlagen - Sicherheitsrisiko endeckt! Bitte manuell einloggen.");
 			}
 		}
 		else
@@ -186,13 +200,12 @@ class Auth
 			}
 			else
 			{
-				//throw new Exception\LoginErrorException("Anmeldeinformationen fehlerhaft! Bitte die Eingaben &uuml;berpr&uuml;fen.");
-	
+				$this->addError("Anmeldeinformationen fehlerhaft! Bitte die Eingaben &uuml;berpr&uuml;fen.");
 			}
 		}
 		else
 		{
-			//throw new Exception\LoginErrorException("Anmeldung fehlgeschlagen. Keine Accountinformationen &uuml;bermittelt.");
+			$this->addError("Anmeldung fehlgeschlagen. Keine Accountinformationen &uuml;bermittelt.");
 		}
 	}
 	
@@ -221,10 +234,7 @@ class Auth
 		}
 		else
 		{
-			//$admin			= self::getUserData($row['admin']);
-				
-			//throw new Exception\LoginErrorException("Dieses Benutzerkonto wurde von Admin: <strong>" . $admin['username'] . "</strong> am <strong>" . date("d.m.Y", $row['date']) . "
-								//</strong> um <strong>" . date("H:i", $row['date']) . "</strong> gesperrt.<br /><br /><strong>Grund:</strong> " . $row['reason'], 20);
+			$this->addError("Benutzerkonto ist gesperrt.");
 		}
 	}
 
@@ -252,7 +262,7 @@ class Auth
 		}
 		else
 		{
-			//throw new Exception\LoginErrorException("Dieses Benutzerkonto wurde nicht aktiviert. Bitte Maileingang &uuml;berpr&uuml;fen und Konto aktivieren.");
+			$this->addError("Dieses Benutzerkonto wurde nicht aktiviert. Bitte Maileingang &uuml;berpr&uuml;fen und Konto aktivieren.");
 		}
 	
 	}
@@ -284,7 +294,7 @@ class Auth
 		}
 		else
 		{
-			die("Es ist kein Gastkonto vorhanden.");
+			throw new \Exception("Es ist kein Gastkonto vorhanden.");
 		}
 	}
 	
@@ -316,7 +326,21 @@ class Auth
 						)";
 		$res	= $this->db->query($sql) or die($this->db->error);
 	}
-
+	
+	private function addError($message)
+	{
+		$this->errors[]	= $message;
+	}
+	
+	public function getErrors()
+	{
+		if(!empty($this->errors))
+		{
+			return $this->errors;
+		}
+		
+		return false;
+	}
 }
 
 ?>
