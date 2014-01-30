@@ -1,0 +1,236 @@
+<?php
+
+namespace wsc\view;
+use wsc\application\Application;
+use wsc\view\renderer\Php;
+use wsc\view\renderer\AbstractRenderer;
+use wsc\functions\tools\Tools;
+/**
+ *
+ * @author Michi
+ *        
+ */
+abstract class AbstractView 
+{
+	/**
+	 * Dateipfad zum View Template
+	 * @var string
+	 */
+	protected $file;
+	
+	/**
+	 * Inhalt des View Templates
+	 * @var string
+	 */
+	protected $content;
+	
+	/**
+	 * Objekt des Renderers
+	 * @var AbstractRenderer
+	 */
+	public $renderer;
+	
+	/**
+	 * Im View Template verwendete Variablen
+	 * @var array
+	 */
+	public $variables	= array();
+	
+	/**
+	 * Legt den Standardrenderer fest.
+	 */
+	public function __construct()
+	{
+		$this->setRenderer(new Php());
+	}
+	
+	/**
+	 * Lädt den Inhalt der im View Template vorhandenen Variablen aus 
+	 * $variables
+	 * @param string $var	Die aufgerufene Variable.
+	 */
+	public function __get($var)
+	{
+		if(isset($this->variables[$var]))
+		{
+			return $this->variables[$var];
+		}
+	}
+	
+	/**
+	 * Lädt die View Helfer, die im View Template benötigt werden.
+	 * 
+	 * @param string $method	Aufgerufener View Helfer
+	 * @param array $params		Parameter für den View Helfer
+	 */
+	public function __call($method, $params)
+	{
+		die( "ViewHelper wurde im Controller nicht gefuden! (Sind noch nicht verfuegbar)");
+	}
+	
+	/**
+	 * Gibt die fertig gerenderte und eventuell konvertierte View zurück.
+	 */
+	abstract public function getView();
+	
+	/**
+	 * Fügt weiteren Inhalt an.
+	 *  
+	 * @param string $content
+	 */
+	public function add($content)
+	{
+		$this->content	.= $content;
+	}
+	
+	/**
+	 * Definiert die Variablen die im View Template benötigt werden.
+	 * Der erste Parameter muss dem Namen der zu verwendenden Variable im View Template entsprechen.
+	 * 
+	 * @param string $vars		Name der Variable im View Template.
+	 * @param mixed $value		Inhalt durch die die Variable ersetzt wird.
+	 */
+	public function assign($vars, $value = "")
+	{
+		if(!is_array($vars))
+		{
+			$this->variables[$vars] = $value;
+		}
+	
+		if(is_array($vars))
+		{
+			foreach ($vars as $var	=> $value)
+			{
+				$this->variables[$var]	= $value;
+			}
+		}
+	}
+	
+	/**
+	 * Ersetzt den Standardrenderer durch einen benutzerdefinierten Renderer.
+	 * 
+	 * @param AbstractRenderer $renderer	der Renderer
+	 */
+	public function setRenderer(AbstractRenderer $renderer)
+	{
+		$this->renderer	= $renderer;
+	}
+	
+	/**
+	 * Gibt einen manuellen Pfad zum View Template an.
+	 * 
+	 * @param string $file		Pfad zur Datei
+	 */
+	public function setViewFile($file)
+	{
+		$this->file	= $file;
+	}
+	
+	/**
+	 * Gibt den Inhalt des View Templates zurück.
+	 *
+	 * @return string
+	 */
+	protected function getContent()
+	{
+		$this->openFile();
+	
+		return $this->content;
+	}
+	
+	/**
+	 * Öffnet das View Template und rendert den Inhalt
+	 */
+	private function openFile()
+	{
+		if(empty($this->file))
+		{
+			$this->setViewFile($this->getTemplatePath());
+		}
+		if(file_exists($this->file))
+		{
+			ob_start();
+			include $this->file;
+			$content	= ob_get_contents();
+			ob_end_clean();
+			
+			$content	= $this->render($content);
+			$this->setContent($content);
+		}
+	}
+	
+	/**
+	 * Übergibt den Content an den Renderer, der diesen rendert und zurückgibt.
+	 *
+	 * @param string $content
+	 * @return string
+	 */
+	private function render($content)
+	{
+		if($this->renderer instanceof AbstractRenderer)
+		{
+			return $this->renderer->render($content);
+		}
+	
+		return $content;
+	}
+	
+	/**
+	 * Setzt den Content.
+	 * @param string $content	Gerenderter Inhalt des View Templates.
+	 */
+	private function setContent($content)
+	{
+		$this->content	.= $content;
+	}
+	
+	/**
+	 * Gibt den Pfad des Standardview Templates zurück.
+	 * 
+	 * @return string
+	 */
+	private function getTemplatePath()
+	{
+		return $this->getViewDir()."/".$this->getViewFileName().".".$this->renderer->fileextension;
+	}
+	
+	/**
+	 * Gibt den Pfad zum Standardview Template zurück.
+	 * 
+	 * @return string|boolean
+	 */
+	private function getViewDir()
+	{
+		$config	= Application::getInstance()->load("config");
+		
+		$doc_root	= $config->get("doc_root");
+		$proj_path	= $config->get("project_dir");
+		$tpl_path	= $config->get("template_dir");
+		$def_tpl	= $config->get("DefaultTemplate");
+		$view_path	= $config->get("view_dir");
+		$controller = Application::getInstance()->load("FrontController")->getActiveController();
+		
+		if($tpl_path && $def_tpl)
+		{
+			$path	= $doc_root."/".$proj_path."/".$tpl_path."/".$def_tpl."/".$view_path."/".$controller;
+			
+			return $path;
+		}
+		else
+		{
+			die(__METHOD__ . ": die Eigenschaften template_dir und DefaultTemplate muessen in der Config eingestellt werden.");
+		}
+		
+		return false;
+	}
+	
+	/**
+	 * Gibt den Namen des Standardview Templates zurück.
+	 * @return string
+	 */
+	private function getViewFileName()
+	{
+		return Application::getInstance()->load("FrontController")->getActiveAction();
+	}
+}
+?>

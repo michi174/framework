@@ -118,6 +118,24 @@ class Element implements ElementInterface
 	}
 	
 	/**
+	 * Gibt den Inhalt des Feldes zurück.
+	 * 
+	 * @return mixed $value		Der Inhalt des Elements
+	 */
+	public function getValue()
+	{
+		if(isset($this->attributes['value']))
+		{
+			return $this->attributes['value'];
+		}
+		
+		else 
+		{
+			return null;
+		}
+	}
+	
+	/**
 	 * Baut das HTML-Element aus den bestimmten Eigenschaften zusammen.
 	 * unt gibt dieses zurück.
 	 * 

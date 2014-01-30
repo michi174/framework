@@ -31,7 +31,11 @@ class Auth
 	
 	public function __construct(Application &$application)
 	{
-		$this->application		= $application;
+		if($application instanceof Application)
+		{
+			$this->application	= $application;
+		}
+		
 		$this->db				= $this->application->load("Database");
 		
 		$this->recognizeUser();

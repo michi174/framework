@@ -2,50 +2,56 @@
 
 namespace wsc\controller;
 
-use wsc\view\View_abstract;
+use wsc\application\Application;
+use wsc\view\AbstractView;
+use wsc\view\Html;
 /**
- *
+ * Standardcontroller von dem alle Controller erben müssen.
+ * 
  * @author Michi
  *        
  */
 class BaseController 
 {
+	/**
+	 * Beinhaltet ein View Objekt.
+	 * 
+	 * @var AbstractView
+	 */
 	protected $view = NULL;
 	
-	
-	public function __call($method, $params)
+	/**
+	 * Erezugt ein View Objekt und gibt dieses zurück. Wird kein Parameter übergeben,
+	 * wird automatisch ein HTML View Objekt erzeugt.
+	 * 
+	 * @param AbstractView ViewObjekt	(Standardmäßig HTML)
+	 * @return resource $view Das View Objekt
+	 */
+	protected function createView(AbstractView $view = null)
 	{
-		die( "ViewHelper wurde im Controller nicht gefuden! (Sind noch nicht verfuegbar)");
-	}
-	
-	public function __get($var)
-	{
-		if(isset($this->view->variables[$var]))
-		{
-			return $this->view->variables[$var];
-		}
-	}
-	
-	public function sendView(View_abstract $view = NULL)
-	{
-		if($view instanceof View_abstract)
+		if($view instanceof AbstractView)
 		{
 			$this->view	= $view;
 		}
-	
-		if($this->view instanceof View_abstract)
+		else
 		{
-			//View Template includieren
-			ob_start();
-			include $this->view->getTemplatePath();
-			$content	= ob_get_contents();
-			ob_end_clean();
-				
-			//Dateiinhalt an den Renderer weitergeben.
-			$content	= $this->view->render($content);
-				
-			//Gerenderten Inhalt zur Ausgabe hinzufügen.
-			$this->view->add($content);
+			$this->view = new Html();
+		}
+		
+		$view	= &$this->view;
+		
+		return $view;
+	}
+	
+	
+	/**
+	 * Sendet die fertige View an die Response.
+	 */
+	public function sendView()
+	{
+		if($this->view instanceof AbstractView)
+		{
+			Application::getInstance()->load("response")->addContent($this->view->getView());
 		}
 	}
 }

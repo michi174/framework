@@ -4,7 +4,7 @@ namespace wsc\application;
 use wsc\config\config;
 use wsc\frontcontroller\Frontcontroller;
 use wsc\http\Request\Request;
-use wsc\http\response\response;
+use wsc\http\response\Response;
 
 /**
  * Application (2013 - 12 - 28)
@@ -80,8 +80,18 @@ class Application
 	private function autostart()
 	{
 		$this->register("Request", new Request($this));					//Request muss vor dem FrontController gestartet werden!
-		$this->register("Response", new response($this));			
+		$this->register("Response", new Response($this));			
 		$this->register("FrontController", new Frontcontroller($this));	//Benötigt ein Request-Objekt in der Applikation.
+	}
+	
+	private function isRegistered($resource)
+	{
+		if(isset($this->resources[strtolower($resource)]))
+		{
+			return true;
+		}
+		
+		return false;
 	}
 	
 	/**

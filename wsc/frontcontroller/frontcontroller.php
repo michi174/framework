@@ -4,8 +4,8 @@ namespace wsc\frontcontroller;
 
 use wsc\controller\controller_abstract;
 use wsc\controller\Subcontroller_abstract;
-use wsc\application\Application;
 use wsc\functions\tools\Tools;
+use wsc\application\Application;
 
 /**
  *
@@ -25,8 +25,10 @@ class Frontcontroller
 	const ACTION_SUFFIX	= "_action";
 	
 	private $controller;
-	private $subcontroller;
 	private $action;
+	
+	private $active_controller;
+	private $active_action;
 	
 	private $subControllers	= array();
 	
@@ -37,36 +39,20 @@ class Frontcontroller
 	private $application;
 	
 	
-	public function __construct(Application &$application)
+	public function __construct(Application $application)
 	{
-		$this->application	= $application;
+		if($application	instanceof Application)
+		{
+			$this->application	= $application;
+		}
+		
 		$this->config		= $this->application->load("config");
-
 		$this->controller	= $this->application->load("request")->getController();
 		$this->action		= $this->application->load("request")->getAction();
 		
 		$this->formClassName();
 		$this->route();
 
-	}
-	
-	/**
-	 * Legt den benötigten Controller und die benötigte Action fest.
-	 */
-	private function route()
-	{
-		if(!$this->isController())
-		{
-			//DEBUG: echo "Controller &rsquo;".$this->controller."&rsquo; wurde nicht gefunden. Der Standardcontroller &rsquo;" . $this->config->get("default_controller"). "&rsquo; wird geladen.<br />";
-			$this->controller = $this->config->get("default_controller");
-		}
-		
-		if(!$this->isAction())
-		{
-			//DEBUG: echo "Die Action &rsquo;".$this->action."&rsquo; wurde im Controller &rsquo;".$this->controller."&rsquo; nicht gefunden. Es wird die Standard-Action geladen.<br />";
-			$this->action	= "default";
-		}
-			//DEBUG: echo "Es wurde &rsquo;" . $this->controller ."->" . $this->action ."&rsquo; geladen!<br />";
 	}
 	
 	/**
@@ -90,7 +76,10 @@ class Frontcontroller
 			if($acl->hasPermission($user, $this->controller, $this->action))
 			{
 				//MainController ausführen
-				$controller->sendView($controller->{$this->action.self::ACTION_SUFFIX}());
+				$this->setActiveController($this->controller);
+				$this->setActiveAction($this->action);
+				$controller->{$this->action.self::ACTION_SUFFIX}();
+				$controller->sendView();
 			}
 			else 
 			{
@@ -123,30 +112,54 @@ class Frontcontroller
 		$this->subControllers[$subcontroller]	= $blacklist;
 	}
 	
-	private function setActiveSubController($subcontroller)
+	/**
+	 * Gibt den verwendetet Controller zurück
+	 *
+	 * @return string $controller	Der aktive Controller
+	 */
+	public function getActiveController()
 	{
-		$this->subcontroller	= $subcontroller;
+		return $this->active_controller;
 	}
 	
 	/**
-	 * Gibt den aktuell geöffneten SubController zurück.
-	 * 
-	 * @return string SubController
+	 * Gibt die verwendete Action zurück
+	 *
+	 * @return string $action	Die aktive Action
 	 */
-	public function getActiveSubController()
+	public function getActiveAction()
 	{
-		return $this->subcontroller;
+		return $this->active_action;
+	}
+	
+	/**
+	 * Legt den benötigten Controller und die benötigte Action fest.
+	 */
+	private function route()
+	{
+		if(!$this->isController())
+		{
+			//DEBUG: echo "Controller &rsquo;".$this->controller."&rsquo; wurde nicht gefunden. Der Standardcontroller &rsquo;" . $this->config->get("default_controller"). "&rsquo; wird geladen.<br />";
+			$this->controller = $this->config->get("default_controller");
+		}
+	
+		if(!$this->isAction())
+		{
+			//DEBUG: echo "Die Action &rsquo;".$this->action."&rsquo; wurde im Controller &rsquo;".$this->controller."&rsquo; nicht gefunden. Es wird die Standard-Action geladen.<br />";
+			$this->action	= "default";
+		}
+		//DEBUG: echo "Es wurde &rsquo;" . $this->controller ."->" . $this->action ."&rsquo; geladen!<br />";
 	}
 	
 	/**
 	 * Führt die SubController aus.
-	 * 
+	 *
 	 * Über den Paramenter $beforeMainController wird gesteuert, ob der SubController vor
 	 * oder nach dem MainController ausgeführt wird.
-	 * 
+	 *
 	 * Vorher 	= true
 	 * Nachher 	= false
-	 * 
+	 *
 	 * @param boolean $beforeMainController	Zeitpunkt zudem der SubController ausgeührt wird.
 	 */
 	private function runSubControllers($beforeMainController)
@@ -158,7 +171,7 @@ class Frontcontroller
 			{
 				//Nein, er wird bearbeitet.
 				$subcontroller_class	= $this->application->load("config")->get("subcontroller_namespace")."\\".$subController."\\".$subController;
-				
+	
 				//Existiert der SubController?
 				if(class_exists($subcontroller_class))
 				{
@@ -166,15 +179,17 @@ class Frontcontroller
 					//Ist der SubController gültig?
 					if(Subcontroller_abstract::isValidSubController($object))
 					{
-						$this->setActiveSubController($subController);
-						
+						$this->setActiveController($subController);
+						$this->setActiveAction($subController);
+	
 						if($beforeMainController === true)
 						{
 							//Alle SubController die vor dem MainConroller ausgeführt werden müssen, werden gestartet.
 							if(method_exists($object, "runBeforeMain"))
 							{
-								$object->sendView($object->runBeforeMain());
-								
+								$object->runBeforeMain();
+								$object->sendView();
+	
 								//Gibt es noch Funktionen, die dannach ausgeführt werden müssen?
 								if(!method_exists($object, "runAfterMain"))
 								{
@@ -191,7 +206,9 @@ class Frontcontroller
 						{
 							if(method_exists($object, "runAfterMain"))
 							{
-								$object->sendView($object->runAfterMain());
+								$object->runAfterMain();
+								$object->sendView();
+	
 								unset($this->subControllers[$subController]);
 							}
 							else
@@ -217,6 +234,25 @@ class Frontcontroller
 		}
 	}
 	
+	/**
+	 * Setzt den Namen des aktiven Controllers
+	 * 
+	 * @param string $controller	Name des Controllers
+	 */
+	private function setActiveController($controller)
+	{
+		$this->active_controller	= $controller;
+	}
+	
+	/**
+	 * Setzt den Namen der aktiven Action
+	 *
+	 * @param string $action	Name der Action
+	 */
+	private function setActiveAction($action)
+	{
+		$this->active_action	= $action;
+	}
 	
 	/**
 	 * Überprüft, ob das Request Objekt einen gültigen Controller beinhaltet.
@@ -268,26 +304,6 @@ class Frontcontroller
 	{
 		$this->namespace	= $this->config->get("controller_namespace")."\\".$this->controller."\\";
 		$this->class		= $this->namespace.$this->controller;
-	}
-	
-	/**
-	 * Gibt den verwendetet Controller zurück
-	 * 
-	 * @return string $controller	Der aktive Controller
-	 */
-	public function getActiveController()
-	{
-		return $this->controller;
-	}
-	
-	/**
-	 * Gibt die verwendete Action zurück
-	 *
-	 * @return string $action	Die aktive Action
-	 */
-	public function getActiveAction()
-	{
-		return $this->action;
 	}
 }
 ?>

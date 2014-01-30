@@ -2,7 +2,6 @@
 
 namespace wsc\validator;
 
-use wsc\application\Application;
 /**
  *
  * @author Michi

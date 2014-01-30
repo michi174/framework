@@ -163,13 +163,11 @@ class Template
 		
 		if(file_exists($file))
 		{
-			$this->output	= file_get_contents($file);
-			return true;
+			return file_get_contents($file);
 		}
 		else
 		{
 			$this->debug->log("Das Template &rsquo;" . $file . "&rsquo; wurde nicht gefunden!");
-			return false;
 		}
 	}
 	
@@ -798,7 +796,11 @@ class Template
 	 */	
 	public function display($render = false)
 	{
-		$this->openTemplate();
+		if(empty($this->output))
+		{
+			$this->setContentToRender($this->openTemplate());
+		}
+		
 		$this->compileTemplate();
 		
 		if($render === false)

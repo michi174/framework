@@ -37,7 +37,11 @@ class Request
 	
 	public function __construct(Application &$application)
 	{
-		$this->application	= $application;
+		if($application instanceof Application)
+		{
+			$this->application	= $application;
+		}
+		
 		$this->cookie		= &$_COOKIE;
 		$this->post			= &$_POST;
 		$this->get			= &$_GET;
@@ -130,6 +134,26 @@ class Request
 			return $this->post[$var];
 		}
 		
+		return null;
+	}
+	
+	/**
+	 * Gibt ein $_POST oder $_GET Arrayelement zurück.
+	 *
+	 * @param mixed $var	Das gewünschte REQUEST Element.
+	 * @return multitype:mixed|NULL
+	 */
+	public function request($var)
+	{
+		if($this->issetPost($var))
+		{
+			return $this->post[$var];
+		}
+		elseif($this->issetGet($var))
+		{
+			return $this->get[$var];
+		}
+	
 		return null;
 	}
 	

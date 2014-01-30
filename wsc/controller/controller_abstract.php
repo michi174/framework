@@ -1,7 +1,6 @@
 <?php
 namespace wsc\controller;
 use wsc\application\Application;
-use wsc\view\View_abstract;
 /** 
  * @author Michi
  * 

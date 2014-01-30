@@ -24,7 +24,11 @@ class Acl
 	
 	public function __construct(Application &$application, User $user = null)
 	{
-		$this->application	= $application;
+		if($application instanceof Application)
+		{
+			$this->application	= $application;
+		}
+		
 		$this->db			= $this->application->load("Database");
 		$this->user			= $user;
 	}

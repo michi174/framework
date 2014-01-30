@@ -18,8 +18,8 @@ class Between extends ValidatorAbstract {
 	
 	protected $message_templates	= array(
 		self::IS_INVALID	=> "ungueltiger Datentyp",
-		self::IS_TOO_BIG	=> "muss < {max} sein",
-		self::IS_TOO_SMALL	=> "muss > {min} sein",
+		self::IS_TOO_BIG	=> "muss &lt; {max} sein",
+		self::IS_TOO_SMALL	=> "muss &gt; {min} sein",
 		self::IS_NOT_STRICT	=> "muss genau (strict) zwischen {min} und {max} sein",
 	);
 	protected $options				= array(
