@@ -18,17 +18,19 @@ use wsc\application\Application;
  */
 class Request 
 {
-	private $post		= array();
-	private $get		= array();
-	private $file		= array();
-	private $cookie		= array();
-	private $request	= array();
+	private $post      = array();
+	private $get       = array();
+	private $file      = array();
+	private $cookie    = array();
+	private $request   = array();
 	
-	private $actionname		= NULL;
-	private $controllername	= NULL;
+	private $actionname        = NULL;
+	private $controllername    = NULL;
+	private $modulname         = NULL;
 	
-	private $controller	= "index";
-	private $action		= "default";
+	private $controller    = "index";
+	private $action        = "default";
+	private $modul         = NULL;
 	
 	private $application;
 	
@@ -53,6 +55,7 @@ class Request
 		
 		try 
 		{
+		    $this->setModulName();
 			$this->setControllerName();
 			$this->setActionName();			
 		}
@@ -64,6 +67,7 @@ class Request
 
 		$this->setController();
 		$this->setAction();
+		$this->setModul();
 	}
 	
 	/**
@@ -76,12 +80,21 @@ class Request
 		
 	}
 	/**
-	 * Filtert die Action aus den Request heraus.
+	 * Filtert die Action aus dem Request heraus.
 	 */
 	private function setAction()
 	{
 		$this->action		= (isset($this->request[$this->getActionName()])) ? $this->request[$this->getActionName()] : "";
 		unset($this->request[$this->getActionName()]);
+	}
+	
+	/**
+	 * Filter das Modul aus dem Request heraus.
+	 */
+	private function setModul()
+	{
+	    $this->modul		= (isset($this->request[$this->getModulName()])) ? $this->request[$this->getModulName()] : "";
+	    unset($this->request[$this->getModulName()]);
 	}
 	
 	/**
@@ -102,6 +115,11 @@ class Request
 	public function getAction()
 	{
 		return $this->action;
+	}
+	
+	public function getModule()
+	{
+	    return $this->modul;
 	}
 	
 	/**
@@ -217,6 +235,10 @@ class Request
 	public function getControllerName(){
 		return $this->controllername;
 	}
+	public function getModulName()
+	{
+	    return $this->modulname;
+	}
 	
 	
 	/**
@@ -252,6 +274,20 @@ class Request
 		}
 		
 		$this->actionname = $this->config->get("actionname");
+	}
+	
+	/**
+	 * Ließt den Modulnamen aus der Config aus und legt diesen fest.
+	 * @throws \Exception
+	 */
+	private function setModulName()
+	{
+	    if(!$this->config->get("modulname") || $this->config->get("modulname") == "")
+	    {
+            throw new \Exception("Es muss ein Actionname in der Konfiguration festegelegt werden (Bsp.: config->set(modulname, 'modul')");
+	    }
+	    
+	    $this->modulname = $this->config->get("modulname");
 	}
 }
 

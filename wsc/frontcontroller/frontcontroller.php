@@ -22,18 +22,21 @@ use wsc\application\Application;
  */
 class Frontcontroller
 {
-	const ACTION_SUFFIX	= "_action";
+	const ACTION_SUFFIX    = "_action";
 	
-	private $controller;
-	private $action;
+	private $controller    = NULL;
+	private $action        = NULL;
+	private $modul         = NULL;
 	
 	private $active_controller;
 	private $active_action;
+	private $active_modul;
 	
-	private $subControllers	= array();
+	private $subControllers    = array();
+	private $subModuls         = array();
 	
-	private $namespace	= NULL;
-	private $class		= NULL;
+	private $namespace = NULL;
+	private $class     = NULL;
 	
 	private $config;
 	private $application;
@@ -46,9 +49,10 @@ class Frontcontroller
 			$this->application	= $application;
 		}
 		
-		$this->config		= $this->application->load("config");
-		$this->controller	= $this->application->load("request")->getController();
-		$this->action		= $this->application->load("request")->getAction();
+		$this->config     = $this->application->load("config");
+		$this->controller = $this->application->load("request")->getController();
+		$this->action     = $this->application->load("request")->getAction();
+		$this->modul      = $this->application->load("request")->getModule();
 		
 		$this->formClassName();
 		$this->route();
@@ -73,7 +77,7 @@ class Frontcontroller
 		if(controller_abstract::isValidController($controller))
 		{
 			//Berechtigung überprüfen
-			if($acl->hasPermission($user, $this->controller, $this->action))
+			if($acl->hasPermission($user, $this->controller, $this->action, $this->modul))
 			{
 				//MainController ausführen
 				$this->setActiveController($this->controller);
@@ -302,8 +306,8 @@ class Frontcontroller
 	 */
 	private function formClassName()
 	{
-		$this->namespace	= $this->config->get("controller_namespace")."\\".$this->controller."\\";
-		$this->class		= $this->namespace.$this->controller;
+	  $this->namespace	= $this->config->get("controller_namespace")."\\".$this->controller."\\";
+	  $this->class		= $this->namespace.$this->controller;
 	}
 }
 ?>

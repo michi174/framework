@@ -73,7 +73,7 @@ class Acl
 	 */
 	
 	
-	public function hasPermission($reference, $resource, $privilege, $reference_type = NULL)
+	public function hasPermission($reference, $resource, $privilege, $group = "system", $reference_type = NULL)
 	{
 		if(is_string($resource))
 		{

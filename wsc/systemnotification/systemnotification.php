@@ -175,7 +175,7 @@ class SystemNotification
 		
 		foreach($this->types as $type)
 		{
-			$template_dir	= "template/win8_style/templates";
+			$template_dir	= "view";
 			$template_name	= "systemnotification.html";
 			
 			$notification	= new template\template();

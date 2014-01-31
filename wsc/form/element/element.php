@@ -42,8 +42,6 @@ class Element implements ElementInterface
 		)
 	);
 	
-	private $decorators	= array();
-	
 	
 	public function __construct($element_name)
 	{
@@ -69,27 +67,6 @@ class Element implements ElementInterface
 	public function setLabel($label)
 	{
 		$this->options['label']	= $label;
-	}
-	
-	/**
-	 * Legt fest, welches HTML-Element erstellt wird.
-	 * (input, select, option, usw...)
-	 * 
-	 * @param string $element
-	 */
-	public function setElement($element)
-	{
-		$this->options['element']	= $element;
-	}
-	
-	/**
-	 * Gibt das den HTML Code des Elements zurück.
-	 * 
-	 * @return string
-	 */
-	public function getElement()
-	{
-		return $this->build();
 	}
 	
 	/**
@@ -133,27 +110,6 @@ class Element implements ElementInterface
 		{
 			return null;
 		}
-	}
-	
-	/**
-	 * Baut das HTML-Element aus den bestimmten Eigenschaften zusammen.
-	 * unt gibt dieses zurück.
-	 * 
-	 * @return string
-	 */
-	private function build()
-	{
-		$attributes	= "";
-		
-		foreach ($this->attributes as $attribute => $value)
-		{
-			$attributes	.= "$attribute=\"$value\" ";
-		}
-		
-		$start_tag	= substr($this->tags[$this->options['element']]['start'], 0, -1);
-		$end_tag	= $this->tags[$this->options['element']]['end'];
-		
-		return $start_tag." ".$attributes.">".$end_tag;
 	}
 	
 	/**
@@ -205,14 +161,10 @@ class Element implements ElementInterface
 	{
 		$this->setAttribute("required", "required");
 	}
-	
-	/**
-	 * Wenn versucht wird, das Objekt auszugeben, wird stattdessen,
-	 * das Element zurück- bzw. ausgegeben.
-	 */
-	public function __toString()
+
+	public function getAttributes()
 	{
-		return $this->getElement();
+	    return $this->attributes;
 	}
 }
 

@@ -4,7 +4,6 @@ namespace wsc\view;
 use wsc\application\Application;
 use wsc\view\renderer\Php;
 use wsc\view\renderer\AbstractRenderer;
-use wsc\functions\tools\Tools;
 /**
  *
  * @author Michi
@@ -37,6 +36,17 @@ abstract class AbstractView
 	public $variables	= array();
 	
 	/**
+	 * Registrierte ViewHelper
+	 * @var array
+	 */
+	public $helpers  = array(
+	    'FormInput'    => 'wsc\form\view\helpers\FormInput',
+	    'FormText'     => 'wsc\form\view\helpers\FormText',
+	    'FormPassword' => 'wsc\form\view\helpers\FormPassword',
+	    'FormSubmit'    => 'wsc\form\view\helpers\FormSubmit'
+	);
+	
+	/**
 	 * Legt den Standardrenderer fest.
 	 */
 	public function __construct()
@@ -65,7 +75,7 @@ abstract class AbstractView
 	 */
 	public function __call($method, $params)
 	{
-		die( "ViewHelper wurde im Controller nicht gefuden! (Sind noch nicht verfuegbar)");
+	    return $this->getHelper($method, $params);
 	}
 	
 	/**
@@ -137,7 +147,35 @@ abstract class AbstractView
 	
 		return $this->content;
 	}
+
 	
+	public function addHelper($name, $class)
+	{
+	    if(class_exists($class))
+	    {
+	        $this->helpers[$name]   = $class;
+	    }
+	}
+	
+	/**
+	 * Gibt das Objekt eines ViewHelpers zurück.
+	 * @param string $helper
+	 */
+	public function getHelper($helper, $params)
+	{
+        if(isset($this->helpers[$helper]))
+        {
+            return new $this->helpers[$helper]($params);
+        }
+        else 
+        {
+            $class  = "wsc\\view\\helper\\".$helper;
+            if(class_exists($class))
+            {
+                return new $class($params);
+            }
+        }
+	}
 	/**
 	 * Öffnet das View Template und rendert den Inhalt
 	 */
@@ -205,23 +243,12 @@ abstract class AbstractView
 		
 		$doc_root	= $config->get("doc_root");
 		$proj_path	= $config->get("project_dir");
-		$tpl_path	= $config->get("template_dir");
-		$def_tpl	= $config->get("DefaultTemplate");
 		$view_path	= $config->get("view_dir");
 		$controller = Application::getInstance()->load("FrontController")->getActiveController();
 		
-		if($tpl_path && $def_tpl)
-		{
-			$path	= $doc_root."/".$proj_path."/".$tpl_path."/".$def_tpl."/".$view_path."/".$controller;
+        $path	= $doc_root."/".$proj_path."/".$view_path."/".$controller;
 			
-			return $path;
-		}
-		else
-		{
-			die(__METHOD__ . ": die Eigenschaften template_dir und DefaultTemplate muessen in der Config eingestellt werden.");
-		}
-		
-		return false;
+		return $path;
 	}
 	
 	/**
