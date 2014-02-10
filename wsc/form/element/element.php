@@ -166,6 +166,11 @@ class Element implements ElementInterface
 	{
 	    return $this->attributes;
 	}
+	
+	public function getAttribute($attribute)
+	{
+	    return isset($this->attributes[$attribute]) ? $this->attributes[$attribute] : null;
+	}
 }
 
 ?>

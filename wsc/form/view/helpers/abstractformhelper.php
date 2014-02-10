@@ -10,6 +10,12 @@ use wsc\view\helper\AbstractHelper;
  */
 abstract class AbstractFormHelper extends AbstractHelper
 {
+    /**
+     * Erzeugt einen String aller Attribute aus einem Array.
+     * 
+     * @param array $attributes
+     * @return string
+     */
     protected function buildAttrString(array $attributes)
     {
         $attr_strings   = array();

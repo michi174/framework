@@ -40,10 +40,12 @@ abstract class AbstractView
 	 * @var array
 	 */
 	public $helpers  = array(
-	    'FormInput'    => 'wsc\form\view\helpers\FormInput',
-	    'FormText'     => 'wsc\form\view\helpers\FormText',
-	    'FormPassword' => 'wsc\form\view\helpers\FormPassword',
-	    'FormSubmit'    => 'wsc\form\view\helpers\FormSubmit'
+	    'formInput'    => 'wsc\form\view\helpers\formInput',
+	    'formText'     => 'wsc\form\view\helpers\formText',
+	    'formPassword' => 'wsc\form\view\helpers\formPassword',
+	    'formSubmit'   => 'wsc\form\view\helpers\formSubmit',
+	    'form'         => 'wsc\form\view\helpers\form',
+	    'formElement'  => 'wsc\form\view\helpers\formElement',
 	);
 	
 	/**

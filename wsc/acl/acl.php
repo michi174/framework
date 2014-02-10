@@ -43,23 +43,6 @@ class Acl
 		
 	}
 	
-	public function guard()
-	{
-		//Überrpüfen, ob Ressourcenlink vorhanden ist.
-		if($this->checkResourcelink() === true)
-		{
-			//Berechtigung des Benutzers prüfen
-			
-			//wenn berechtigung vorhanden
-			//return true
-			//sonst
-			//return false
-		}
-		
-		//sonst
-		//return true
-	}
-	
 	/**
 	 * Überprüft ob der Benutzer, Rolle oder die Gruppe eine Berechtigung auf eine Ressource hat.
 	 * 
@@ -71,9 +54,7 @@ class Acl
 	 * @param string 	$privilege
 	 * @param string	$reference_type
 	 */
-	
-	
-	public function hasPermission($reference, $resource, $privilege, $group = "system", $reference_type = NULL)
+	public function hasPermission($reference, $resource, $privilege, $reference_type = NULL)
 	{
 		if(is_string($resource))
 		{

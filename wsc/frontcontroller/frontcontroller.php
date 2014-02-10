@@ -77,7 +77,7 @@ class Frontcontroller
 		if(controller_abstract::isValidController($controller))
 		{
 			//Berechtigung überprüfen
-			if($acl->hasPermission($user, $this->controller, $this->action, $this->modul))
+			if($acl->hasPermission($user, $this->controller, $this->action))
 			{
 				//MainController ausführen
 				$this->setActiveController($this->controller);
