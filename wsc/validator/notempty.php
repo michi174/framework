@@ -27,8 +27,8 @@ class NotEmpty extends ValidatorAbstract
 	 * @var array
 	 */
 	protected $message_templates	= array(
-		self::IS_EMPTY		=> "leerer Parameter",
-		self::IS_INVALID	=> "ungueltiger Datentyp"
+		self::IS_EMPTY		=> "Darf nicht leer sein.",
+		self::IS_INVALID	=> "Ungueltiger Datentyp"
 	);
 	
 	/**
@@ -182,7 +182,7 @@ class NotEmpty extends ValidatorAbstract
 		{
 			//String
 			case self::STRING:
-				if($value === '')
+				if(trim($value) === '')
 				{
 					$this->createMessage(self::IS_EMPTY);
 					return false;

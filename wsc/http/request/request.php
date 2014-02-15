@@ -128,14 +128,23 @@ class Request
 	 * @param mixed $var
 	 * @return multitype: mixed|NULL
 	 */
-	public function get($var)
+	public function get($var = null)
 	{
-		if($this->issetGet($var))
-		{
-			return $this->get[$var];
-		}
-		
-		return null;
+	    if(!is_null($var))
+	    {
+	        if($this->issetGet($var))
+	        {
+	            return $this->get[$var];
+	        }
+	        else 
+	        {
+	            return null;
+	        }
+	    }
+        else 
+        {
+            return $this->get;
+        }
 	}
 	
 	
@@ -145,14 +154,23 @@ class Request
 	 * @param mixed $var	Das gewünschte POST Element.
 	 * @return multitype:mixed|NULL
 	 */
-	public function post($var)
+	public function post($var = null)
 	{
-		if($this->issetPost($var))
+	    if(!is_null($var))
+	    {
+	        if($this->issetPost($var))
+	        {
+	            return $this->post[$var];
+	        }
+	        else
+	        {
+	            return null;
+	        }
+	    }
+		else
 		{
-			return $this->post[$var];
+		    return $this->post;
 		}
-		
-		return null;
 	}
 	
 	/**

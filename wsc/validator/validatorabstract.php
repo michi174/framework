@@ -74,6 +74,7 @@ abstract class ValidatorAbstract implements ValidatorInterface
 	public function setMessage($message_key, $message)
 	{
 		$this->messageOptions['messageTemplates'][$message_key]	= $message;
+		return $this;
 	}
 	
 	/**

@@ -5,6 +5,7 @@ namespace wsc\form;
 use wsc\validator\ValidatorInterface;
 use wsc\validator\ValidatorFactory;
 use wsc\form\element\ElementInterface;
+use wsc\application\Application;
 /**
  *
  * @author Michi
@@ -54,7 +55,9 @@ class Form implements FormInterface
 	 *
 	 * @var boolean
 	 */
-	private $hasValidatet  = null;
+	private $hasValidated  = false;
+	
+	private $messages      = null;
 	
 	/**
 	 * Legt den Namen der Form fest.
@@ -74,6 +77,7 @@ class Form implements FormInterface
 	public function add(ElementInterface $element)
 	{
 		$this->elements[$element->getAttribute('name')]   = $element;
+		return $this;
 	}
 	
 	/**
@@ -82,11 +86,11 @@ class Form implements FormInterface
 	 * @param string $name     Name des Elements
 	 * @return multitype:ElementInterface|NULL
 	 */
-	public function get($name)
+	public function get($element)
 	{
-	    if(isset($this->elements[$name]))
+	    if(isset($this->elements[$element]))
 	    {
-	        return $this->elements[$name];
+	        return $this->elements[$element];
 	    }
 	    
 	    return null;
@@ -111,6 +115,11 @@ class Form implements FormInterface
 	public function getAttributes()
 	{
 	    return $this->attributes;
+	}
+	
+	public function getAttribute($attribute)
+	{
+	    return isset($this->attributes[$attribute]) ? $this->attributes[$attribute] : null;
 	}
 	
 	/**
@@ -160,6 +169,11 @@ class Form implements FormInterface
      */
     public function isValid()
     {
+        if(!$this->hasValidated)
+        {
+            $this->validate();
+        }
+        
         return $this->isValid;
     }
     
@@ -174,12 +188,71 @@ class Form implements FormInterface
         $this->data = $data;
     }
     
+    public function getData($element)
+    {
+        if(isset($this->data[$element]))
+        {
+            return $this->data[$element];
+        }
+        
+        return null;
+    }
+    
     /**
      * Validiert die Form.
      */
     private function validate()
     {
+        $validation = true;
+        $request    = Application::getInstance()->load("request");
+        if(empty($this->data))
+        {
+            if($this->getAttribute("method") == "post")
+            {
+                $this->setData($request->post());
+            }
+            else
+            {
+                $this->setData($request->get());
+            }   
+        }
+        
+        foreach ($this->elements as $element)
+        {
+            $element_name   = $element->getAttribute("name");
+            $element->setData($this->getData($element_name));
+            
+            if(!$element->isValid())
+            {
+                $validation = false;
+                
+                $this->messages[$element_name] = $element->getMessage();
+            }
+        }
+        
         $this->hasValidatet = true;
+        $this->isValid      = $validation;
+    }
+    
+    public function getMessages($element = null)
+    {
+        if(is_null($element))
+        {
+            return $this->messages;
+        }
+        else
+        {
+            if(isset($this->messages[$this->element->getAttribute("name")]))
+            {
+                $message    = $this->messages[$this->element->getAttribute("name")];
+            }
+            else
+            {
+                $message    = null;
+            }
+            
+            return $message;
+        }
     }
 }
 ?>

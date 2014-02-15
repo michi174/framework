@@ -83,6 +83,7 @@ class ValidatorChain extends ValidatorAbstract
 		else 
 		{
 			$this->createMessage(self::NO_VALIDATOR);
+			return true;
 		}
 	}
 }

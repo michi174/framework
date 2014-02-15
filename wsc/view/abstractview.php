@@ -46,6 +46,7 @@ abstract class AbstractView
 	    'formSubmit'   => 'wsc\form\view\helpers\formSubmit',
 	    'form'         => 'wsc\form\view\helpers\form',
 	    'formElement'  => 'wsc\form\view\helpers\formElement',
+	    'formHidden'   => 'wsc\form\view\helpers\formHidden',
 	);
 	
 	/**

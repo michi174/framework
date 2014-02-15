@@ -4,6 +4,8 @@ namespace wsc\form\element;
 
 use wsc\validator\ValidatorChain;
 use wsc\validator\NotEmpty;
+use wsc\validator\ValidatorInterface;
+use wsc\validator\ValidatorFactory;
 /**
  *
  * @author Michi
@@ -11,38 +13,46 @@ use wsc\validator\NotEmpty;
  */
 class Element implements ElementInterface
 {
-	const INPUT		= "input";
-	const SELECT	= "select";
-	const OPTION	= "option";
+    /**
+     * Attributes des Elements
+     * @var array
+     */
+	private $attributes    = array();
 	
-	const DEFAULT_ELEMENT_TYPE	= self::INPUT;
+	/**
+	 * Übermittelte Daten für das Element
+	 * @var mixed
+	 */
+	private $data          = null;
 	
+	/**
+	 * Validatornachrichten für das Element.
+	 *
+	 * @var string
+	 */
+	private $messages      = null;
 	
-	private $attributes	= array();
+	/**
+	 * Validatoren für das Element.
+	 * @var array
+	 */
+	private $validators    = array();
 	
-	private $options	= array(
-		'element'	=> self::DEFAULT_ELEMENT_TYPE
-	);
+	/**
+	 * Optionen für das Element.
+	 * @var array
+	 */
+	private $options     = array();
 	
-	private $validators	= array();
-	
-	private $tags	= array(
-			
-		self::INPUT		=> array(
-			'start'		=> "<input>",
-			'end'		=> ""
-		),
-		self::SELECT	=> array(
-			'start'		=> "<select>",
-			'end'		=> "</select>"
-		),
-		self::OPTION	=> array(
-			'start'		=> "<option>",
-			'end'		=> "</option>"
-		)
-	);
-	
-	
+	/**
+	 * Steuert ob die übermittelten Daten als Value eingesetzt werden oder nicht.
+	 * @var unknown
+	 */
+	protected $autovalue   = true;
+
+	/**
+	 * @param string $element_name     Name des zu erstellenden Elements
+	 */
 	public function __construct($element_name)
 	{
 		$this->setAttribute("name", $element_name);
@@ -57,6 +67,7 @@ class Element implements ElementInterface
 	public function setAttribute($attribute, $value = "")
 	{
 		$this->attributes[$attribute]	= $value;
+		return $this;
 	}
 	
 	/**
@@ -67,6 +78,8 @@ class Element implements ElementInterface
 	public function setLabel($label)
 	{
 		$this->options['label']	= $label;
+		
+		return $this;
 	}
 	
 	/**
@@ -119,26 +132,25 @@ class Element implements ElementInterface
 	 */
 	public function isValid()
 	{
-		if(isset($this->attributes['value']))
+		if(!is_null($this->data))
 		{
 			$chain		= new ValidatorChain();
-			$required	= new NotEmpty();
 			
 			foreach ($this->validators as $validator)
 			{
 				$chain->add($validator);
 			}
 			
-			if(!$chain->isValid($this->attributes['value']))
+			if(!$chain->isValid($this->getData()))
 			{
+			    $this->messages  = $chain->getMessage();
 				return false;
 			}
 			
-		}
-		
-		if(isset($this->attributes['required']) && !isset($this->attributes['value']) || !$required->isValid($this->attributes['value']))
-		{
-			return false;
+			if($this->autovalue === true)
+			{
+			    $this->setAttribute("value", $this->getData());
+			}
 		}
 		
 		return true;
@@ -149,9 +161,40 @@ class Element implements ElementInterface
 	 * 
 	 * @param multitype: ValidatorInterface | array | string $validator
 	 */
-	public function addValidator($validator)
+	public function addValidator($validators)
 	{
-		
+	    //Wenn Parameter kein Array, wird er zum Array gemacht.
+	    if(!is_array($validators))
+	    {
+	        $validators	= array($validators);
+	    }
+	    if(is_array($validators))
+	    {
+	        foreach ($validators as $validator)
+	        {
+	            //Wenn der Validator bereits ein gültiges Validatorobjekt ist...
+	            if($validator instanceof ValidatorInterface)
+	            {
+	                $this->validators[]	= $validator;
+	            }
+	            else
+	            {
+	                //...sonst versuche Validatorobjekt aus String zu erstellen.
+	                $factory	= new ValidatorFactory();
+	                	
+	                try
+	                {
+	                    $validator	= $factory->getValidator($validator);
+	                    $this->validators[] = $validator;
+	                }
+	                catch (\Exception $e)
+	                {
+	                    echo nl2br("Exception: ".$e->getMessage()."\n".$e->getTraceAsString());
+	                }
+	            }
+	        }
+	    }
+	    return $this;
 	}
 	
 	/**
@@ -160,16 +203,83 @@ class Element implements ElementInterface
 	public function setRequired()
 	{
 		$this->setAttribute("required", "required");
+		$this->addValidator(new NotEmpty(array(NotEmpty::STRING, NotEmpty::INT, NotEmpty::FLOAT)));
+		return $this;
 	}
-
+    /**
+     * @see \wsc\form\element\ElementInterface::getAttributes()
+     */
 	public function getAttributes()
 	{
 	    return $this->attributes;
 	}
 	
+	/**
+	 * (non-PHPdoc)
+	 * @see \wsc\form\element\ElementInterface::getAttribute()
+	 */
 	public function getAttribute($attribute)
 	{
 	    return isset($this->attributes[$attribute]) ? $this->attributes[$attribute] : null;
+	}
+	
+	/**
+	 * (non-PHPdoc)
+	 * @see \wsc\form\element\ElementInterface::setData()
+	 */
+	public function setData($data)
+	{
+	    $this->data    = $data;
+	    return $this;
+	}
+	
+	/**
+	 * (non-PHPdoc)
+	 * @see \wsc\form\element\ElementInterface::getData()
+	 */
+	public function getData()
+	{
+	    return $this->data;
+	}
+	
+	public function getMessage()
+	{
+	    return $this->messages;
+	}
+	
+	/**
+	 * Steuert, ob nach dem Absenden des Formulares der übermittelte Inhalt,
+	 * oder der Standardinhalt im Formularfeld angezeigt wird.
+	 * 
+	 * Übermittelter Inhalt = true
+	 * Standardinhalt = false
+	 * 
+	 * @param boolean $value
+	 */
+	public function setAutoValue($value)
+	{
+	    if(is_bool($value))
+	    {
+	        $this->autovalue   = $value;
+	    }
+	    
+	    return $this;
+	}
+	
+	public function setDisplayName($name)
+	{
+	    $this->options["displayname"]  = $name;
+	    return $this;
+	}
+	
+	public function getDisplayName()
+	{
+	    if(isset($this->options["displayname"]))
+	    {
+	        return $this->options["displayname"];
+	    }
+	    else
+	        return $this->getAttribute("name");
 	}
 }
 

@@ -21,9 +21,9 @@ class StringLength extends ValidatorAbstract
 	);
 	
 	protected $message_templates	= array(
-		self::IS_INVALID	=> "ungueltiger Datentyp",
-		self::IS_TOO_LONG	=> "String darf maximal {max} Zeichen lang sein",
-		self::IS_TOO_SHORT	=> "String muss mindestens {min} Zeichen lang sein"
+		self::IS_INVALID	=> "Ungueltiger Datentyp",
+		self::IS_TOO_LONG	=> "Darf maximal {max} Zeichen lang sein.",
+		self::IS_TOO_SHORT	=> "Muss mindestens {min} Zeichen lang sein."
 	);
 	
 	public function __construct(array $options = array())
