@@ -16,7 +16,6 @@ class Html extends AbstractView
 	 * @see \wsc\view\View_abstract::getContent()
 	 *
 	 */
-	
 	public function getView() 
 	{
 		return $this->getContent();

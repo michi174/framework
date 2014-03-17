@@ -9,7 +9,13 @@ namespace wsc\validator;
  */
 class ValidatorFactory 
 {
-	
+	/**
+	 * Erzeugt ein Objekt des angeforderten Validators und gibt dieses zurück.
+	 * 
+	 * @param string $validator    Angeforderter Validator
+	 * @throws \Exception
+	 * @return ValidatorInterface
+	 */
 	public function getValidator($validator)
 	{
 		if($this->isValidator($validator))
@@ -23,6 +29,12 @@ class ValidatorFactory
 		}
 	}
 	
+	/**
+	 * Überprüft, ob der übergebene Validator gültig ist.
+	 * 
+	 * @param string $validator    Zu prüfender Validator
+	 * @return boolean
+	 */
 	private function isValidator($validator)
 	{
 		$class	= __NAMESPACE__."\\".$validator;

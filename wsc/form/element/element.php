@@ -42,13 +42,21 @@ class Element implements ElementInterface
 	 * Optionen für das Element.
 	 * @var array
 	 */
-	private $options     = array();
+	private $options     = array(
+	    'error_class'  => 'input-error',
+	);
 	
 	/**
 	 * Steuert ob die übermittelten Daten als Value eingesetzt werden oder nicht.
 	 * @var unknown
 	 */
 	protected $autovalue   = true;
+	
+	/**
+	 * Hat das Element einen Validierungsfehler oder nicht.
+	 * @var boolean
+	 */
+	private $hasError      = false;
 
 	/**
 	 * @param string $element_name     Name des zu erstellenden Elements
@@ -85,25 +93,21 @@ class Element implements ElementInterface
 	/**
 	 * Gibt das Label zurück. Wird der HTML Parameter auf true gesetzt, wird ein Label Tag erzeugt.
 	 * 
-	 * @param boolean $html		Bestimmt ob als reiner Text oder als <label> HTML-Tag
 	 * @return string
 	 */
-	public function getLabel($html = false)
+	public function getLabel()
 	{
-		if($html)
+		if(!isset($this->attributes['id']))
 		{
-			if(!isset($this->attributes['id']))
-			{
-				$this->setAttribute("id", $this->attributes['name']);
-			}
+			$this->setAttribute("id", $this->attributes['name']);
+		}
 			
-			if(isset($this->options['label']))
-			{
-				return "<label for=\"".$this->attributes['id']. "\">".$this->options['label']."</label>";
-			}
+		if(isset($this->options['label']))
+		{
+		    return $this->options['label'];
 		}
 		
-		return $this->options['label'];
+		return null;
 
 	}
 	
@@ -144,6 +148,8 @@ class Element implements ElementInterface
 			if(!$chain->isValid($this->getData()))
 			{
 			    $this->messages  = $chain->getMessage();
+			    $this->hasError  = true;
+			    $this->setAttribute("class", $this->getAttribute("class"). " " . $this->options['error_class']);
 				return false;
 			}
 			
@@ -280,6 +286,11 @@ class Element implements ElementInterface
 	    }
 	    else
 	        return $this->getAttribute("name");
+	}
+	
+	public function hasError()
+	{
+	    return $this->hasError;
 	}
 }
 

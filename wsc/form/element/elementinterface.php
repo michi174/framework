@@ -70,6 +70,19 @@ interface ElementInterface
 	 * @param mixed $validator
 	 */
 	public function addValidator($validator);
+	
+	/**
+	 * Fügt dem Element ein Label hinzu.
+	 * 
+	 * @param string $label
+	 */
+	public function setLabel($label);
+	
+	/**
+	 * Gibt das Label des Elementes zurück.
+	 * @return string
+	 */
+	public function getLabel();
 }
 
 ?>

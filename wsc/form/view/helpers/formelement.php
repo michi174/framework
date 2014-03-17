@@ -1,7 +1,7 @@
 <?php
 namespace wsc\form\view\helpers;
 
-class formElement extends FormInput
+class FormElement extends FormInput
 {
     
 }

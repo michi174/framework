@@ -6,8 +6,11 @@ use wsc\validator\ValidatorInterface;
 use wsc\validator\ValidatorFactory;
 use wsc\form\element\ElementInterface;
 use wsc\application\Application;
+
 /**
- *
+ * Die Form Klasse bietet die Funktionen um HTML Formen zu erzeugen, deren Eingabe zu Filtern
+ * und den Inhalt zu Validieren.
+ * 
  * @author Michi
  *        
  */
@@ -57,6 +60,11 @@ class Form implements FormInterface
 	 */
 	private $hasValidated  = false;
 	
+	/**
+	 * Validatornachrichten.
+	 * 
+	 * @var array
+	 */
 	private $messages      = null;
 	
 	/**
@@ -69,23 +77,20 @@ class Form implements FormInterface
 	    $this->setAttribute("name", $name);
 	}
 	
-	/**
-	 * Fügt der Form ein Element hinzu.
-	 * 
-	 * @param Element $element
-	 */
+    /**
+     * (non-PHPdoc)
+     * @see \wsc\form\FormInterface::add()
+     */
 	public function add(ElementInterface $element)
 	{
 		$this->elements[$element->getAttribute('name')]   = $element;
 		return $this;
 	}
 	
-	/**
-	 * Gibt ein Element der Form zurück.
-	 * 
-	 * @param string $name     Name des Elements
-	 * @return multitype:ElementInterface|NULL
-	 */
+    /**
+     * (non-PHPdoc)
+     * @see \wsc\form\FormInterface::get()
+     */
 	public function get($element)
 	{
 	    if(isset($this->elements[$element]))
@@ -96,37 +101,37 @@ class Form implements FormInterface
 	    return null;
 	}
 	
-	/**
-	 * Fügt einen Attribut hinzu.
-	 * 
-	 * @param string $attribute    Attributname
-	 * @param string $value        Inhalt des Attributes
-	 */
+    /**
+     * (non-PHPdoc)
+     * @see \wsc\form\FormInterface::setAttribute()
+     */
 	public function setAttribute($attribute, $value)
 	{
 	    $this->attributes[$attribute]  = $value;
 	}
 	
-	/**
-	 * Gibt alle Attribute einer Form zurück
-	 * 
-	 * @see \wsc\form\FormInterface::getAttributes()
-	 */
+    /**
+     * (non-PHPdoc)
+     * @see \wsc\form\FormInterface::getAttributes()
+     */
 	public function getAttributes()
 	{
 	    return $this->attributes;
 	}
 	
+	/**
+	 * (non-PHPdoc)
+	 * @see \wsc\form\FormInterface::getAttribute()
+	 */
 	public function getAttribute($attribute)
 	{
 	    return isset($this->attributes[$attribute]) ? $this->attributes[$attribute] : null;
 	}
 	
-	/**
-	 * Fügt der gesamten Form einen oder mehrere Validatoren hinzu.
-	 * 
-	 * @param multitype:string|array|ValidatorInterface $validators
-	 */
+    /**
+     * (non-PHPdoc)
+     * @see \wsc\form\FormInterface::addValidators()
+     */
 	public function addValidators($validators)
 	{
 	    //Wenn Parameter kein Array, wird er zum Array gemacht.
@@ -163,9 +168,8 @@ class Form implements FormInterface
     }
     
     /**
-     * Gibt zurück ob die Form valide ist oder nicht.
-     * 
-     * @return boolean
+     * (non-PHPdoc)
+     * @see \wsc\form\FormInterface::isValid()
      */
     public function isValid()
     {
@@ -178,16 +182,18 @@ class Form implements FormInterface
     }
     
     /**
-     * Legt den zu überprüfenden Inhalt der Form fest.
-     * Meißt ein ($_POST Array).
-     * 
-     * @param array $data
+     * (non-PHPdoc)
+     * @see \wsc\form\FormInterface::setData()
      */
     public function setData(array $data)
     {
         $this->data = $data;
     }
     
+    /**
+     * (non-PHPdoc)
+     * @see \wsc\form\FormInterface::getData()
+     */
     public function getData($element)
     {
         if(isset($this->data[$element]))
@@ -205,6 +211,7 @@ class Form implements FormInterface
     {
         $validation = true;
         $request    = Application::getInstance()->load("request");
+        
         if(empty($this->data))
         {
             if($this->getAttribute("method") == "post")
@@ -234,6 +241,10 @@ class Form implements FormInterface
         $this->isValid      = $validation;
     }
     
+    /**
+     * (non-PHPdoc)
+     * @see \wsc\form\FormInterface::getMessages()
+     */
     public function getMessages($element = null)
     {
         if(is_null($element))

@@ -3,7 +3,7 @@ namespace wsc\form\view\helpers;
 
 use wsc\form\FormInterface;
 
-class form extends AbstractFormHelper
+class Form extends AbstractFormHelper
 {
     /**
      * Gibt den öffnenden Tag der Form zurück.
@@ -31,7 +31,7 @@ class form extends AbstractFormHelper
      * @param FormInterface $form
      * @return string
      */
-    private function render(FormInterface $form)
+    public function render(FormInterface $form)
     {
         return "<form ". $this->buildAttrString($form->getAttributes()) . ">";
     }

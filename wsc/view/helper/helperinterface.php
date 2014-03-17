@@ -12,6 +12,7 @@ interface HelperInterface
     const NO_PARAMS             = "noParamsWereGiven";
     
     public function __construct($params = NULL);
+    public function __toString();
 }
 
 ?>

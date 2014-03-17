@@ -2,12 +2,16 @@
 namespace wsc\form\view\helpers;
 
 use wsc\form\element\ElementInterface;
-
-class FormHidden extends FormInput
+/**
+ *
+ * @author michi_000
+ *        
+ */
+class formReset extends FormInput
 {
     protected function getType(ElementInterface $element)
     {
-        return "hidden";
+        return "reset";
     }
 }
 
