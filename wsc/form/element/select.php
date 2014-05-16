@@ -1,0 +1,106 @@
+<?php
+namespace wsc\form\element;
+
+/**
+ *
+ * @author michi_000
+ *        
+ */
+class Select extends Element
+{
+    protected $select_options       = array();
+    protected $option_attr          = array();
+    
+    
+    public function __construct($name)
+    {
+        parent::__construct($name);
+    }
+    
+    /**
+     * Fügt dem Select Element eine Option hinzu.
+     * 
+     * @param string $name
+     * @param string $display_name
+     */
+    public function addOption($name, $display_name = null)
+    {
+        if(is_null($display_name))
+        {
+            $display_name   = $name;
+        }
+        
+        $this->select_options[$name]   = $display_name;
+        $this->setOptionAttribute($name, "value", $name);
+        
+        return $this;
+    }
+    
+    /**
+     * Fügt der Select Option ein Attribut hinzu.
+     * 
+     * @param string $option
+     * @param string $attribute
+     * @param string $value
+     */
+    public function setOptionAttribute($option, $attribute, $value = "")
+    { 
+        $this->option_attr[$option][$attribute] = $value;
+    }
+    
+    /**
+     * Gibt alle Attribute der Option zurück.
+     * 
+     * @param string $option
+     * @return array
+     */
+    public function getOptionAttributes($option)
+    {
+        return $this->option_attr[$option];
+    }
+    
+    /**
+     * Gibt alle Optionen des Select Elementes zurück.
+     * @return array
+     */
+    public function getOptions()
+    {
+        return $this->select_options;
+    }
+    
+    /**
+     * Setzt die standardmäßig markierte Option.
+     * @param string $option
+     */
+    public function setDefaultOption($option)
+    {
+        //Prüfen, ob bereits eine default option gesetzt ist, wenn erforderlich entfernen.
+        foreach ($this->select_options as $old_default => $name)
+        {
+            if(isset($this->option_attr[$old_default]['selected']))
+            {
+                unset($this->option_attr[$old_default]['selected']);
+            }
+        }
+        
+        //Neue Default Option definieren
+        $this->setOptionAttribute($option, "selected", "selected");
+        return $this;
+    }
+    
+    /**
+     * Überschreibt die Methode zum Schreiben der AutoValue, da für Select Elemente,
+     * nicht die Value verändert wird, sondern der selected Attribut verwendet wird.
+     * 
+     * @see \wsc\form\element\Element::writeAutoValue()
+     */
+    protected function writeAutoValue()
+    {        
+        if(isset($this->select_options[$this->getData()]))
+        {
+            $this->setDefaultOption($this->getData());
+        }
+    }
+}
+
+?>

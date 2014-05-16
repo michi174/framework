@@ -50,7 +50,7 @@ class Element implements ElementInterface
 	 * Steuert ob die übermittelten Daten als Value eingesetzt werden oder nicht.
 	 * @var unknown
 	 */
-	protected $autovalue   = true;
+	private $autovalue   = true;
 	
 	/**
 	 * Hat das Element einen Validierungsfehler oder nicht.
@@ -155,11 +155,23 @@ class Element implements ElementInterface
 			
 			if($this->autovalue === true)
 			{
-			    $this->setAttribute("value", $this->getData());
+			    $this->writeAutoValue();
 			}
+			
 		}
 		
 		return true;
+	}
+	
+	/**
+	 * Schreibt die übermittelten Daten als Value in das Element.
+	 * 
+	 * Damit wird erreicht, dass der eingebene Wert nach einer möglicherweiße fehlerhaften
+	 * Validierung auch nach dem Absenden noch im Input Feld angezeigt wird.
+	 */
+	protected function writeAutoValue()
+	{
+	    $this->setAttribute("value", $this->getData());
 	}
 	
 	/**

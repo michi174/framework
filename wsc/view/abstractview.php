@@ -51,6 +51,9 @@ abstract class AbstractView
 	    'formReset'    => 'wsc\form\view\helpers\formReset',
 	    'formRow'      => 'wsc\form\view\helpers\formRow',
 	    'formLabel'    => 'wsc\form\view\helpers\formLabel',
+	    'formSelect'   => 'wsc\form\view\helpers\formSelect',
+	    'formCheckbox' => 'wsc\form\view\helpers\formCheckbox',
+	    'formRadio'    => 'wsc\form\view\helpers\formRadio',
 	);
 	
 	/**

@@ -1,6 +1,5 @@
 <?php
 namespace wsc\pluginmanager;
-use wsc\database as database;
 use wsc\application\Application;
 /**
  * PluginManager (2013 - 03 - 02)
@@ -19,7 +18,7 @@ class PluginManager
 	 * @var (string) - Pluginverzeichnis
 	 * @since 1.0
 	 */
-	protected $dir_path		= PLUGIN_DIR;
+	protected $dir_path		= null;
 	
 	
 	/**
@@ -36,6 +35,7 @@ class PluginManager
 	protected $plugins		= array();
 	
 	
+	
 	/**
 	 * Sucht bereits vorhandene Plug-ins.
 	 *
@@ -43,7 +43,7 @@ class PluginManager
 	 */
 	protected function getRegisteredPlugins()
 	{
-		$db		= new database\Database();
+		$db		= Application::getInstance()->load("Database");
 		$config	= Application::getInstance()->load("Config");
 		
 		$sql	= "SELECT plugin_name FROM areas";
@@ -67,6 +67,7 @@ class PluginManager
 	 */
 	public function checkPlugins()
 	{
+	    $this->dir_path    = Application::getInstance()->load("config")->get("doc_root")."/".Application::getInstance()->load("config")->get("project_dir")."/".Application::getInstance()->load("config")->get("plugin_dir")."/";
 		$this->getRegisteredPlugins();
 		
 		$open_dir		= opendir($this->dir_path);
@@ -111,6 +112,8 @@ class PluginManager
 		$default_action	= NULL;
 		$sort			= NULL; //Ende "install" Zuweisung
 		
+		$db		= Application::getInstance()->load("Database");
+		
 		$install	= require_once($this->dir_path . $dir . "/install.php");
 
 		$this->sortPlugins($sort);
@@ -131,7 +134,7 @@ class PluginManager
 								'". $style_name ."',
 								'". $sort ."')";
 		
-		$res	= mysql_query($sql) or die("SQL-Fehler in Datei: " . __FILE__ . ":" . __LINE__ . "<br /><br />" . mysql_error() . "<br />");
+		$res	= $db->query($sql) or die("SQL-Fehler in Datei: " . __FILE__ . ":" . __LINE__ . "<br /><br />" . $db->error. "<br />");
 	}
 	
 	
@@ -142,18 +145,20 @@ class PluginManager
 	 */
 	protected function sortPlugins($sort)
 	{
+	    $db		= Application::getInstance()->load("Database");
+	    
 		$sql	= "SELECT id, sort FROM areas WHERE sort >= '" . $sort . "' ORDER BY sort ASC";
-		$res	= mysql_query($sql) or die("SQL-Fehler in Datei: " . __FILE__ . ":" . __LINE__ . "<br /><br />" . mysql_error() . "<br />");
-		$num	= mysql_num_rows($res);
+		$res	= $db->query($sql) or die("SQL-Fehler in Datei: " . __FILE__ . ":" . __LINE__ . "<br /><br />" . $db->error. "<br />");
+		$num	= $res->num_rows();
 		
 		if($num > 0)
 		{
-			while(($row = mysql_fetch_assoc($res)) == true)
+			while(($row = $res->fetch_assoc($res)) == true)
 			{
 				if($row['sort'] == $sort)
 				{
 					$sql	= "UPDATE areas SET sort = sort+1 WHERE id = " . $row['id'];
-					mysql_query($sql) or die("SQL-Fehler in Datei: " . __FILE__ . ":" . __LINE__ . "<br /><br />" . mysql_error() . "<br />");
+					$db->query($sql) or die("SQL-Fehler in Datei: " . __FILE__ . ":" . __LINE__ . "<br /><br />" . $db->error. "<br />");
 				}
 			}
 		}

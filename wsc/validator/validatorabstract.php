@@ -151,7 +151,7 @@ abstract class ValidatorAbstract implements ValidatorInterface
 	 * 
 	 * @param mixed $value	Zu überprüfender Inhalt.
 	 */
-	protected function __invoke($value)
+	public function __invoke($value)
 	{
 		return $this->isValid($value);
 	}
