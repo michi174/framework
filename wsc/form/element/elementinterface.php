@@ -84,10 +84,23 @@ interface ElementInterface
 	 */
 	public function getLabel();
 	
+	/**
+	 * Gibt die Option "DB Tabelle" aus die dem Element zugewiesen ist.
+	 */
 	public function getDBTable();
 	
+	/**
+	 * Gibt die Option "DB Tabellenfeld" aus die dem Element zugewiesen ist.
+	 */
 	public function getTableField();
 	
+	/**
+	 * Weist dem Element ein Datenbanktabellenfeld zu.
+	 * Der Parameter Tabelle ist dabei optional, wenn im Form Objekt eine Standardtabelle gewählt wurde.
+	 * 
+	 * @param string $field
+	 * @param string $table
+	 */
 	public function setTableField($field, $table = null);
 }
 

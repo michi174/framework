@@ -6,7 +6,6 @@ use wsc\validator\ValidatorInterface;
 use wsc\validator\ValidatorFactory;
 use wsc\form\element\ElementInterface;
 use wsc\application\Application;
-use wsc\database\Database;
 
 /**
  * Die Form Klasse bietet die Funktionen um HTML Formen zu erzeugen, deren Eingabe zu Filtern
@@ -298,19 +297,15 @@ class Form implements FormInterface
         }
     }
     
-    /**
-     * Datenbankfunktionen aktivieren.
-     * Erfordert eine Datenbankverbindung als Paramenter.
-     * 
-     * @param Database $database
-     */
+
     public function enableDBFunctions($database)
     {
         $this->database = $database;
     }
     
     /**
-     * Bei führt den ausgewählten Befehl in der Datenbank aus.
+     * (non-PHPdoc)
+     * @see \wsc\form\FormInterface::executeDatabase()
      */
     public function executeDatabase()
     {
@@ -414,17 +409,28 @@ class Form implements FormInterface
         
         
     }
-    
+    /**
+     * (non-PHPdoc)
+     * @see \wsc\form\FormInterface::setUpdateID()
+     */
     public function setUpdateID($db_field, $value)
     {
         $this->update_id[$db_field] = $value;
     }
     
+    /**
+     * (non-PHPdoc)
+     * @see \wsc\form\FormInterface::setDefaultTable()
+     */
     public function setDefaultTable($table)
     {
         $this->default_table    = $table;
     }
     
+    /**
+     * (non-PHPdoc)
+     * @see \wsc\form\FormInterface::setDBMod()
+     */
     public function setDBMod($db_mod)
     {
         if($db_mod == (self::DB_INSERT || self::DB_DELETE || self::DB_SELECT || self::DB_UPDATE))
@@ -433,6 +439,10 @@ class Form implements FormInterface
         }
     }
     
+    /**
+     * (non-PHPdoc)
+     * @see \wsc\form\FormInterface::addManualDBField()
+     */
     public function addManualDBField($table = null, $field, $value)
     {
         if(empty($table))

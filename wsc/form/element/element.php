@@ -266,6 +266,10 @@ class Element implements ElementInterface
 	    return $this->data;
 	}
 	
+	/**
+	 * (non-PHPdoc)
+	 * @see \wsc\form\element\ElementInterface::getMessage()
+	 */
 	public function getMessage()
 	{
 	    return $this->messages;
@@ -290,12 +294,23 @@ class Element implements ElementInterface
 	    return $this;
 	}
 	
+	/**
+	 * Weist dem Element einen Anzeigenamen zu.
+	 * 
+	 * @param string $name
+	 * @return \wsc\form\element\Element
+	 */
 	public function setDisplayName($name)
 	{
 	    $this->options["displayname"]  = $name;
 	    return $this;
 	}
 	
+	/**
+	 * Gibt den Anzeigenamen des Elementes zurück.
+	 * 
+	 * @return string
+	 */
 	public function getDisplayName()
 	{
 	    if(isset($this->options["displayname"]))
@@ -306,11 +321,20 @@ class Element implements ElementInterface
 	        return $this->getAttribute("name");
 	}
 	
+	/**
+	 * Gibt zurück, ob das Feld einen Fehler bei der Validierung hatte.
+	 * 
+	 * @return boolean
+	 */
 	public function hasError()
 	{
 	    return $this->hasError;
 	}
 	
+	/**
+	 * (non-PHPdoc)
+	 * @see \wsc\form\element\ElementInterface::setTableField()
+	 */
 	public function setTableField($field, $table = null)
 	{
 	    $this->options['db_table_field']   = $field;
@@ -319,6 +343,10 @@ class Element implements ElementInterface
 	    return $this;
 	}
 	
+	/**
+	 * (non-PHPdoc)
+	 * @see \wsc\form\element\ElementInterface::getTableField()
+	 */
 	public function getTableField()
 	{
 	    if(isset($this->options['db_table_field']))
@@ -327,6 +355,10 @@ class Element implements ElementInterface
 	    }
 	}
 	
+	/**
+	 * (non-PHPdoc)
+	 * @see \wsc\form\element\ElementInterface::getDBTable()
+	 */
 	public function getDBTable()
 	{
 	    return $this->options['db_table'];
