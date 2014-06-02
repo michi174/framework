@@ -48,7 +48,7 @@ class FormRow extends AbstractFormHelper
             
             if($this->label_pos === self::PREPEND)
             {
-                array_unshift($row, $label);
+                array_unshift($row, $label."<br>");
             }
             else
             {
@@ -57,7 +57,7 @@ class FormRow extends AbstractFormHelper
         }
         
         //Fehlernachrichten hinzufügen
-        $row[]  = $this->error_helper->render($element);
+        //$row[]  = $this->error_helper->render($element);
         
         return implode("", $row);
     }

@@ -6,6 +6,7 @@ use wsc\validator\ValidatorInterface;
 use wsc\validator\ValidatorFactory;
 use wsc\form\element\ElementInterface;
 use wsc\application\Application;
+use wsc\database\Database;
 
 /**
  * Die Form Klasse bietet die Funktionen um HTML Formen zu erzeugen, deren Eingabe zu Filtern
@@ -16,6 +17,12 @@ use wsc\application\Application;
  */
 class Form implements FormInterface
 {
+    const DB_INSERT = "insert";
+    const DB_UPDATE = "update";
+    const DB_DELETE = "delete";
+    const DB_SELECT = "select";
+    
+    private $database   = null;
     /**
      * Enthält die Attribute der Form
      * 
@@ -66,6 +73,31 @@ class Form implements FormInterface
 	 * @var array
 	 */
 	private $messages      = null;
+	
+	/**
+	 * Standard DB Tabelle, in die diese Form schreiben wird.
+	 * @var unknown
+	 */
+	private $default_table = null;
+	
+	/**
+	 * Was wird bei erfolgreicher Validierung des Formulares in der Datenbank gemacht?
+	 * @var string
+	 */
+	private $db_mod        = null;
+	
+	/**
+	 * Beinhaltet, den in der DB zu updateten Datensatz.
+	 * array: DB-Feld => Form Element
+	 * @var unknown
+	 */
+	private $update_id     = array();
+	
+	/**
+	 * Beinhaltet Datenbankfelder, die nicht über das Formular eingetragen werden.
+	 * @var array
+	 */
+	private $manual_DB_fields  = array();
 	
 	/**
 	 * Legt den Namen der Form fest.
@@ -263,6 +295,153 @@ class Form implements FormInterface
             }
             
             return $message;
+        }
+    }
+    
+    /**
+     * Datenbankfunktionen aktivieren.
+     * Erfordert eine Datenbankverbindung als Paramenter.
+     * 
+     * @param Database $database
+     */
+    public function enableDBFunctions($database)
+    {
+        $this->database = $database;
+    }
+    
+    /**
+     * Bei führt den ausgewählten Befehl in der Datenbank aus.
+     */
+    public function executeDatabase()
+    {
+        if($this->database !== null)
+        {
+            //$db_data['table']    = array('field' => 'value');
+            $db_data = array();
+            
+            foreach ($this->elements as $element)
+            {
+                if(!empty($element->getTableField()))
+                {
+                    if(!empty($element->getDBTable) || !empty($this->default_table))
+                    {
+                        if(empty($element->getDBTable()))
+                        {
+                            $db_table   = $this->default_table;
+                        }
+                        else
+                        {
+                            $db_table   = $element->getDBTable();
+                        }
+                        
+                        $db_data[$db_table][$element->getTableField()]  = $element->getData();
+                    }
+                    else
+                    {
+                        echo ("Keine Datenbanktabelle zum Eintrage der Daten eingetragen.");
+                    }
+                }
+            }
+            
+            foreach ($this->manual_DB_fields as $table => $data)
+            {
+                foreach ($data as $field => $value)
+                {
+                    $db_data[$table][$field]    = $value;
+                }
+            }
+            
+            switch ($this->db_mod)
+            {
+            	case self::DB_INSERT:
+            	    
+            	    $statements    = array();
+            	    foreach ($db_data as $table => $data)
+            	    {
+                        $statement  = "INSERT INTO " . $table . " (";
+                        
+                        $num_fields = count($data);
+                        $loops  = 1;
+                        
+                        foreach ($data as $field => $value)
+                        {
+                            $statement  .= "" . $field . "";
+                            
+                            if($loops < $num_fields)
+                            {
+                                $statement  .= ",";
+                            }
+                            $loops  += 1;
+                        }
+                        
+                        $loops  = 1;
+                        
+                        $statement  .= ") VALUES(";
+                        
+                        foreach ($data as $value)
+                        {
+                            $statement  .= "'" . $value . "'";
+                        
+                            if($loops < $num_fields)
+                            {
+                                $statement  .= ",";
+                            }
+                            
+                            $loops  += 1;
+                        }
+                        
+                        $statement  .= ")";
+                        
+                        $statements[]   = $statement;
+            	    }
+            	    foreach ($statements as $statement)
+            	    {
+            	        $res   = $this->database->query($statement) or die($this->database->error);
+            	    }
+            	    
+            	    return $res;
+            	    
+            	break;
+            	
+            	
+            }
+            
+        }
+        else
+        {
+            echo "Es wurde keine Datenbankverbindung übergeben. Die Form Daten können nicht geschrieben werden.";
+        }
+        
+        
+    }
+    
+    public function setUpdateID($db_field, $value)
+    {
+        $this->update_id[$db_field] = $value;
+    }
+    
+    public function setDefaultTable($table)
+    {
+        $this->default_table    = $table;
+    }
+    
+    public function setDBMod($db_mod)
+    {
+        if($db_mod == (self::DB_INSERT || self::DB_DELETE || self::DB_SELECT || self::DB_UPDATE))
+        {
+            $this->db_mod = $db_mod;
+        }
+    }
+    
+    public function addManualDBField($table = null, $field, $value)
+    {
+        if(empty($table))
+        {
+            if(!empty($this->default_table))
+            {
+                $table  = $this->default_table;
+                $this->manual_DB_fields[$table][$field] = $value;
+            }
         }
     }
 }

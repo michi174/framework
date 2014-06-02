@@ -23,7 +23,7 @@ class Element implements ElementInterface
 	 * Übermittelte Daten für das Element
 	 * @var mixed
 	 */
-	private $data          = null;
+	protected $data          = null;
 	
 	/**
 	 * Validatornachrichten für das Element.
@@ -57,7 +57,13 @@ class Element implements ElementInterface
 	 * @var boolean
 	 */
 	private $hasError      = false;
-
+    
+	/**
+	 * Feld in der DB Tabelle, das befüllt wird.
+	 * @var array
+	 */
+	private $table_field   = array();
+	
 	/**
 	 * @param string $element_name     Name des zu erstellenden Elements
 	 */
@@ -303,6 +309,27 @@ class Element implements ElementInterface
 	public function hasError()
 	{
 	    return $this->hasError;
+	}
+	
+	public function setTableField($field, $table = null)
+	{
+	    $this->options['db_table_field']   = $field;
+	    $this->options['db_table']         = $table;
+	    
+	    return $this;
+	}
+	
+	public function getTableField()
+	{
+	    if(isset($this->options['db_table_field']))
+	    {
+	       return $this->options['db_table_field'];
+	    }
+	}
+	
+	public function getDBTable()
+	{
+	    return $this->options['db_table'];
 	}
 }
 

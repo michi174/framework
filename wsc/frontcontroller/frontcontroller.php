@@ -228,7 +228,7 @@ class Frontcontroller
 				}
 				else
 				{
-					die("SubController '".$subController."' wurde nicht gefunden (Klasse).<br />");
+					die("SubController '".$subController.$subcontroller_class."' wurde nicht gefunden (Klasse).<br />");
 				}
 			}
 			else
@@ -266,7 +266,7 @@ class Frontcontroller
 	private function isController()
 	{
 		$controller_path	= $this->config->get("abs_project_path") ."/".$this->config->get("class_dir")."/". $this->class .".php";
-		
+
 		if(file_exists($controller_path))
 		{
 			if(!class_exists($this->class))

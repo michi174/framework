@@ -83,6 +83,12 @@ interface ElementInterface
 	 * @return string
 	 */
 	public function getLabel();
+	
+	public function getDBTable();
+	
+	public function getTableField();
+	
+	public function setTableField($field, $table = null);
 }
 
 ?>

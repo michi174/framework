@@ -78,6 +78,18 @@ interface FormInterface
      * @return array
      */
     public function getMessages($element = null);
+    
+    public function executeDatabase();
+    
+    public function enableDBFunctions($db);
+    
+    public function setUpdateID($db_field, $value);
+    
+    public function setDefaultTable($table);
+    
+    public function setDBMod($db_mod);
+    
+    public function addManualDBField($table = null, $field, $value);
 }
 
 ?>

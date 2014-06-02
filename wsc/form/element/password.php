@@ -20,6 +20,10 @@ class Password extends Element
 		
 	}
 	
+	public function getData()
+	{
+	    return md5($this->data);
+	}
 }
 
 ?>
