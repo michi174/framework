@@ -102,6 +102,8 @@ interface ElementInterface
 	 * @param string $table
 	 */
 	public function setTableField($field, $table = null);
+	
+	public function getDefaultViewHelper();
 }
 
 ?>

@@ -6,6 +6,7 @@ use wsc\validator\ValidatorChain;
 use wsc\validator\NotEmpty;
 use wsc\validator\ValidatorInterface;
 use wsc\validator\ValidatorFactory;
+use wsc\form\view\helpers\FormElement;
 /**
  *
  * @author Michi
@@ -362,6 +363,15 @@ class Element implements ElementInterface
 	public function getDBTable()
 	{
 	    return $this->options['db_table'];
+	}
+	
+	/**
+	 * (non-PHPdoc)
+	 * @see \wsc\form\element\ElementInterface::getDefaultViewHelper()
+	 */
+	public function getDefaultViewHelper()
+	{
+	    return new FormElement();
 	}
 }
 

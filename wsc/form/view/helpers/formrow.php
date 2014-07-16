@@ -23,7 +23,7 @@ class FormRow extends AbstractFormHelper
     {
         parent::__construct($params);
         
-        $this->getElementHelper();
+        $this->getElementHelper(current($params));
         $this->getLabelHelper();
         $this->getErrorHelper();
     }
@@ -79,9 +79,9 @@ class FormRow extends AbstractFormHelper
     /**
      * Holt den Element Helper, der das Element generieren kann.
      */
-    private function getElementHelper()
+    private function getElementHelper(ElementInterface $element)
     {
-        $this->elemtent_helper  = new FormElement();
+        $this->elemtent_helper  = $element->getDefaultViewHelper();
     }
     
     /**

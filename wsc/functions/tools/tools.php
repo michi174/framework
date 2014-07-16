@@ -2,6 +2,7 @@
 namespace wsc\functions\tools;
 
 use wsc\application\Application;
+use wsc\form\FormInterface;
 class Tools
 {
 	/**
@@ -60,6 +61,26 @@ class Tools
 		
 		return false;
 		
+	}
+	
+	public static function getFormattedFormErrors(FormInterface $form)
+	{
+	    $message  = "Es sind folgende Fehler bei der Validierung aufgetreten:<br><dl>";
+	    
+	    foreach ($form->getMessages() as $element => $messages)
+	    {
+	        $element  = $form->get($element)->getDisplayName();
+	        $message  .= "<dt>".$element."</dt>";
+	    
+	        foreach ($messages as $element_msg)
+	        {
+	            $message  .= "<dd>&bull;&nbsp;" . $element_msg . "</dd>";
+	        }
+	    }
+	    
+	    $message  .= "</dl>";
+	    
+	    return $message;
 	}
 }
 

@@ -27,11 +27,27 @@ class Checkbox extends Element
     
     /**
      * (non-PHPdoc)
+     * @see \wsc\form\element\Element::setData()
+     */
+    public function setData($data)
+    {
+        if($data == "on")
+        {
+            $this->data = 1;
+        }
+        else   
+        {
+            $this->data = 0;
+        }
+    }
+    
+    /**
+     * (non-PHPdoc)
      * @see \wsc\form\element\Element::writeAutoValue()
      */
     protected function writeAutoValue()
     {
-        if($this->getData() == "on")
+        if($this->getData() == 1)
         {
             $this->setActive();
         }

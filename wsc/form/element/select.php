@@ -1,6 +1,7 @@
 <?php
 namespace wsc\form\element;
 
+use wsc\form\view\helpers\FormSelect;
 /**
  *
  * @author michi_000
@@ -34,6 +35,34 @@ class Select extends Element
         $this->setOptionAttribute($name, "value", $name);
         
         return $this;
+    }
+    
+    public function addOptions(array $options)
+    {
+        foreach ($options as $label => $value)
+        {
+            $this->addOption($value, $label);
+        }
+    }
+    
+    public function addOptionsFromDBQuery($options, $value_field, $label_field)
+    {
+        $new_options    = array();
+        
+        if(is_array($options))
+        { 
+            foreach ($options as $option)
+            {
+                $new_options[$option[$label_field]] = $option[$value_field];
+            }
+            
+            $this->addOptions($new_options);
+        }
+        else
+        {
+            $this->addOption(0, "Keine Optionen verf&uuml;gbar");
+            $this->setOptionAttribute(0, "disabled", "disabled");
+        }
     }
     
     /**
@@ -100,6 +129,11 @@ class Select extends Element
         {
             $this->setDefaultOption($this->getData());
         }
+    }
+    
+    public function getDefaultViewHelper()
+    {
+        return new FormSelect();
     }
 }
 

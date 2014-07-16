@@ -73,6 +73,8 @@ class Form implements FormInterface
 	 */
 	private $messages      = null;
 	
+	private $hasSaved      = null;
+	
 	/**
 	 * Standard DB Tabelle, in die diese Form schreiben wird.
 	 * @var unknown
@@ -106,6 +108,7 @@ class Form implements FormInterface
 	public function __construct($name)
 	{
 	    $this->setAttribute("name", $name);
+	    $this->setAttribute("method", "post");
 	}
 	
     /**
@@ -303,49 +306,74 @@ class Form implements FormInterface
         $this->database = $database;
     }
     
+    private function getDBDataFromElements()
+    {
+        //Erklärung array: $db_data['table']    = array('field' => 'value');
+        $db_data = array();
+        
+        foreach ($this->elements as $element)
+        {
+            if(!empty($element->getTableField()))
+            {
+                if(!empty($element->getDBTable) || !empty($this->default_table))
+                {
+                    if(empty($element->getDBTable()))
+                    {
+                        $db_table   = $this->default_table;
+                    }
+                    else
+                    {
+                        $db_table   = $element->getDBTable();
+                    }
+        
+                    $db_data[$db_table][$element->getTableField()]  = $element->getData();
+                }
+                else
+                {
+                    echo ("Keine Datenbanktabelle zum Eintrage der Daten eingetragen.");
+                }
+            }
+        }
+        
+        return $db_data;
+    }
+    
+    private function getManualDBData()
+    {
+        $db_data    = array();
+        
+        foreach ($this->manual_DB_fields as $table => $data)
+        {
+            foreach ($data as $field => $value)
+            {
+                $db_data[$table][$field]    = $value;
+            }
+        }
+        
+        return $db_data;
+    }
+    
     /**
      * (non-PHPdoc)
      * @see \wsc\form\FormInterface::executeDatabase()
      */
-    public function executeDatabase()
+    public function executeDatabase($onlyManualFields = false)
     {
         if($this->database !== null)
         {
-            //$db_data['table']    = array('field' => 'value');
-            $db_data = array();
+            $db_data            = ($onlyManualFields === true) ? array() : $this->getDBDataFromElements();
+            $db_data_manual     = $this->getManualDBData();
             
-            foreach ($this->elements as $element)
+            foreach ($db_data_manual as $table =>  $data_manual)
             {
-                if(!empty($element->getTableField()))
+                foreach ($data_manual as $field => $value)
                 {
-                    if(!empty($element->getDBTable) || !empty($this->default_table))
-                    {
-                        if(empty($element->getDBTable()))
-                        {
-                            $db_table   = $this->default_table;
-                        }
-                        else
-                        {
-                            $db_table   = $element->getDBTable();
-                        }
-                        
-                        $db_data[$db_table][$element->getTableField()]  = $element->getData();
-                    }
-                    else
-                    {
-                        echo ("Keine Datenbanktabelle zum Eintrage der Daten eingetragen.");
-                    }
+                    $db_data[$table][$field]  = $value;
                 }
             }
             
-            foreach ($this->manual_DB_fields as $table => $data)
-            {
-                foreach ($data as $field => $value)
-                {
-                    $db_data[$table][$field]    = $value;
-                }
-            }
-            
+            //die(var_dump($db_data));
+
             switch ($this->db_mod)
             {
             	case self::DB_INSERT:
@@ -388,13 +416,17 @@ class Form implements FormInterface
                         $statement  .= ")";
                         
                         $statements[]   = $statement;
+                        
+                        //DEBUG: echo ($statement)."<br>";
             	    }
             	    foreach ($statements as $statement)
             	    {
             	        $res   = $this->database->query($statement) or die($this->database->error);
             	    }
             	    
-            	    return $res;
+            	    $this->manual_DB_fields    = array();
+            	    
+            	    return array("result"    => $res, "database"   => $this->database);
             	    
             	break;
             	
@@ -445,13 +477,11 @@ class Form implements FormInterface
      */
     public function addManualDBField($table = null, $field, $value)
     {
-        if(empty($table))
+        $db_table  = (empty($table)) ? $this->default_table : $table;
+        
+        if($db_table !== null)
         {
-            if(!empty($this->default_table))
-            {
-                $table  = $this->default_table;
-                $this->manual_DB_fields[$table][$field] = $value;
-            }
+            $this->manual_DB_fields[$db_table][$field] = $value;
         }
     }
 }
