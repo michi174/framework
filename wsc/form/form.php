@@ -100,9 +100,31 @@ class Form implements FormInterface
 	 */
 	private $manual_DB_fields  = array();
 	
+
+	
+	/**
+	 * Enthält die Abfragen, die von einer Masterabfrage abhängig ist.
+	 * @var array
+	 */
+	private $dependQueries     = array();
+	
+	/**
+	 * Enthält die bereits ausgeführten Queries samt den DB Results
+	 * @var array
+	 */
+	private $executedQueries   = array();
+	
+	/**
+	 * Enthält die noch auszuführenden Queries.
+	 * @var array
+	 */
+	private $openQueries       = array();
+	
+	
+	
 	/**
 	 * Legt den Namen der Form fest.
-	 * 
+	 *
 	 * @param string $name     Name der Form
 	 */
 	public function __construct($name)
@@ -110,6 +132,7 @@ class Form implements FormInterface
 	    $this->setAttribute("name", $name);
 	    $this->setAttribute("method", "post");
 	}
+	
 	
     /**
      * (non-PHPdoc)
@@ -255,6 +278,7 @@ class Form implements FormInterface
             else
             {
                 $this->setData($request->get());
+                
             }   
         }
         
@@ -306,6 +330,11 @@ class Form implements FormInterface
         $this->database = $database;
     }
     
+    /**
+     * Stellt die benötigten Daten (Tabellen, Felder, Werte) für das Eintragen der Elemente in die Datenbank bereit.
+     * 
+     * @return array
+     */
     private function getDBDataFromElements()
     {
         //Erklärung array: $db_data['table']    = array('field' => 'value');
@@ -338,6 +367,11 @@ class Form implements FormInterface
         return $db_data;
     }
     
+    /**
+     * Stellt die benötigten Daten (Tabellen, Felder, Werte) für das Eintragen der manuellen Daten in die Datenbank bereit.
+     *
+     * @return array
+     */
     private function getManualDBData()
     {
         $db_data    = array();
@@ -353,94 +387,6 @@ class Form implements FormInterface
         return $db_data;
     }
     
-    /**
-     * (non-PHPdoc)
-     * @see \wsc\form\FormInterface::executeDatabase()
-     */
-    public function executeDatabase($onlyManualFields = false)
-    {
-        if($this->database !== null)
-        {
-            $db_data            = ($onlyManualFields === true) ? array() : $this->getDBDataFromElements();
-            $db_data_manual     = $this->getManualDBData();
-            
-            foreach ($db_data_manual as $table =>  $data_manual)
-            {
-                foreach ($data_manual as $field => $value)
-                {
-                    $db_data[$table][$field]  = $value;
-                }
-            }
-            
-            //die(var_dump($db_data));
-
-            switch ($this->db_mod)
-            {
-            	case self::DB_INSERT:
-            	    
-            	    $statements    = array();
-            	    foreach ($db_data as $table => $data)
-            	    {
-                        $statement  = "INSERT INTO " . $table . " (";
-                        
-                        $num_fields = count($data);
-                        $loops  = 1;
-                        
-                        foreach ($data as $field => $value)
-                        {
-                            $statement  .= "" . $field . "";
-                            
-                            if($loops < $num_fields)
-                            {
-                                $statement  .= ",";
-                            }
-                            $loops  += 1;
-                        }
-                        
-                        $loops  = 1;
-                        
-                        $statement  .= ") VALUES(";
-                        
-                        foreach ($data as $value)
-                        {
-                            $statement  .= "'" . $value . "'";
-                        
-                            if($loops < $num_fields)
-                            {
-                                $statement  .= ",";
-                            }
-                            
-                            $loops  += 1;
-                        }
-                        
-                        $statement  .= ")";
-                        
-                        $statements[]   = $statement;
-                        
-                        //DEBUG: echo ($statement)."<br>";
-            	    }
-            	    foreach ($statements as $statement)
-            	    {
-            	        $res   = $this->database->query($statement) or die($this->database->error);
-            	    }
-            	    
-            	    $this->manual_DB_fields    = array();
-            	    
-            	    return array("result"    => $res, "database"   => $this->database);
-            	    
-            	break;
-            	
-            	
-            }
-            
-        }
-        else
-        {
-            echo "Es wurde keine Datenbankverbindung übergeben. Die Form Daten können nicht geschrieben werden.";
-        }
-        
-        
-    }
     /**
      * (non-PHPdoc)
      * @see \wsc\form\FormInterface::setUpdateID()
@@ -469,6 +415,10 @@ class Form implements FormInterface
         {
             $this->db_mod = $db_mod;
         }
+        else
+        {
+            echo "unbekannte DB Modus ausgewaehlt.";
+        }
     }
     
     /**
@@ -482,6 +432,180 @@ class Form implements FormInterface
         if($db_table !== null)
         {
             $this->manual_DB_fields[$db_table][$field] = $value;
+        }
+    }
+    /**
+     * Fügt eine abhängige Abfrage hinzu.
+     *
+     * @param string $table                Tabelle, in die Abfrage eingreift
+     * @param string $masterQuery          Abfrage, von der die neue Abfrage abhängig ist.
+     * @param string $masterIdTableField   Tabellenfeld in das die ID des Masterdatensatz eingetragen werden soll
+     */
+    public function addDependQuery($table, $masterQuery, $masterIdTableField)
+    {
+        $this->dependQueries[$table]['master']              = $masterQuery;
+        $this->dependQueries[$table]['masterIdTableField']  = $masterIdTableField;
+        $this->dependQueries[$table]['result']              = null;
+    }
+    
+    
+    /**
+     * Bildet den SQL Querystring für die Elemente, die in die Datenbank eingetragen werden sollen.
+     * @param string $method   Methode, die angewandt werden soll. (insert, update, delete)
+     * @param string $query    Name der Abfrage = Name der Tabelle
+     * @param array $fields['DB Feld']['Einzutragender Wert']
+     * @return unknown
+     */
+    private function createQuery($method, $query, $fields)
+    {
+        $table     = $query;
+        $data      = $fields;
+        $statement = "";
+    
+        switch($method)
+        {
+        	case self::DB_INSERT:
+    
+        	    $statement  .= "INSERT INTO " . $table . " (";
+    
+        	    $loops  = 1;
+    
+        	    //Wenn es eine abhängige Abfrage ist..
+        	    if(array_key_exists($query, $this->dependQueries))
+        	    {
+        	        //...und die Masterabfrage bereits durchgeführt wurde, dann lesen wir die benötigten Daten der MA aus und fügen die Daten der abhängigen Abfrage an.
+        	        if(isset($this->executedQueries[$this->dependQueries[$table]['master']]))
+        	        {
+        	            $data[$this->dependQueries[$table]['masterIdTableField']] = $this->executedQueries[$this->dependQueries[$table]['master']]['database']->insert_id;
+        	        }
+        	        else
+        	        {
+        	            echo "<br>Die abhaengige Abfrage konnte nicht auseführt werden, weil die Masterabfrage noch nicht ausgefuehrt wurde!<br>";
+        	        }
+        	    }
+        	    else
+        	    {
+        	        //DEBUG: echo "Es wurde die unabhaengige Abfrage ". $query ." bearbeitet.<br>";
+        	    }
+        	     
+        	    $num_fields = count($data);
+        	     
+        	    foreach ($data as $field => $value)
+        	    {
+        	        $statement  .= "" . $field . "";
+    
+        	        if($loops < $num_fields)
+        	        {
+        	            $statement  .= ",";
+        	        }
+        	        $loops  += 1;
+        	    }
+        	     
+        	    $loops  = 1;
+    
+        	    $statement  .= ") VALUES(";
+    
+        	    foreach ($data as $value)
+        	    {
+        	        $statement  .= "'" . $value . "'";
+    
+        	        if($loops < $num_fields)
+        	        {
+        	            $statement  .= ",";
+        	        }
+    
+        	        $loops  += 1;
+        	    }
+    
+        	    $statement  .= ")";
+    
+        	    break;
+    
+        	case self::DB_UPDATE:
+        	    break;
+    
+        	case self::DB_DELETE:
+        	    break;
+    
+        }
+        return $statement;
+    }
+    
+    /**
+     * Führt die ein SQL Statement aus.
+     *
+     * @param string $table        Der Name der Abfrage.
+     * @param string $statement    Das SQL Statement
+     */
+    private function executeStatement($table, $statement)
+    {
+        if($this->database !== null)
+        {
+            //DEBUG: echo $statement. " wird jetzt ausgefuehrt...<br>";
+             
+            $res     = $this->database->query($statement) or die($this->database->error);
+            $result  = array("result"    => $res, "database"   => $this->database);
+            $this->executedQueries[$table] = $result;
+        }
+        else
+        {
+            echo "Es wurde keine Datenbankverbindung uebergeben. Die Form Daten koennen nicht geschrieben werden.";
+        }
+    
+    }
+    
+    /**
+     * (non-PHPdoc)
+     * @see \wsc\form\FormInterface::executeDatabase()
+     */
+    public function executeDatabase()
+    {
+        $this->openQueries  = $this->getDBDataFromElements();
+        $db_data_manual     = $this->getManualDBData();
+         
+        //Manuelle DB Felder zu den offenen Queries hinzufügen
+        foreach ($db_data_manual as $table =>  $data_manual)
+        {
+            foreach ($data_manual as $field => $value)
+            {
+                $this->openQueries[$table][$field]  = $value;
+            }
+        }
+        //Zuerst alle Queries ausführen, die von keinem anderen Query abhängig sind...
+        $this->runOpenQueries(false);
+        //...dann alle verbleibenden Queries ausführen (mit Abhängigkeit).
+        $this->runOpenQueries(true);
+         
+        return true;
+    }
+    
+    /**
+     * Führt die noch nicht ausgeführten Queries aus.
+     *
+     * @param bool $dependQueries      Steuert, ob die Abhängigen Abfragen mitausgeführt werden sollen.
+     */
+    private function runOpenQueries($dependQueries = false)
+    {
+        $queries   = $this->openQueries;
+         
+         
+        if($dependQueries  === false)
+        {
+            //Abhängige Queries herausnehmen
+            foreach ($queries as $query => $fields)
+            {
+                if(array_key_exists($query, $this->dependQueries))
+                {
+                    unset($queries[$query]);
+                }
+            }
+        }
+        //Queries ausführen und von den offenen Queries entfernen.
+        foreach ($queries as $query => $fields)
+        {
+            $statement = $this->createQuery($this->db_mod, $query, $fields);
+            $this->executeStatement($query, $statement);
+            unset($this->openQueries[$query]);
         }
     }
 }

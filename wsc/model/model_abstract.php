@@ -11,6 +11,9 @@ use wsc\application\Application;
  */
 abstract class Model_abstract 
 {
+    const SORT_ASC  = "ASC";
+    const SORT_DESC = "DESC";
+    
     protected $database = null;
     
     public function __construct()

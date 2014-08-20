@@ -82,6 +82,12 @@ class Tools
 	    
 	    return $message;
 	}
+	
+	public static function getUsernameByID($id)
+	{
+	    $db    = Application::getInstance()->load("database");
+	    return $db->getDataByID("userdata", $id)['username'];
+	}
 }
 
 ?>

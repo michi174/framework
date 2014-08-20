@@ -49,7 +49,7 @@ abstract class AbstractFormHelper extends AbstractHelper
             }
             else
             {
-                continue;
+                $attr_strings[]  = strtolower($attribute). " ";
             }
         }
         return implode(" ", $attr_strings);
