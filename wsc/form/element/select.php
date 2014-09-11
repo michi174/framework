@@ -124,7 +124,7 @@ class Select extends Element
      * @see \wsc\form\element\Element::writeAutoValue()
      */
     protected function writeAutoValue()
-    {        
+    {
         if(isset($this->select_options[$this->getData()]))
         {
             $this->setDefaultOption($this->getData());

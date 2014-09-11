@@ -62,6 +62,14 @@ class Database extends \mysqli
 		
 		return $data;
 	}
+	
+	public function createRecID()
+	{
+	    $sql   = "INSERT recIds";
+	    $res   = self::query($sql);
+	    
+	    return $this->insert_id;
+	}
 }
 
 ?>

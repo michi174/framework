@@ -139,11 +139,19 @@ abstract class AbstractView
 	/**
 	 * Gibt einen manuellen Pfad zum View Template an.
 	 * 
-	 * @param string $file		Pfad zur Datei
+	 * @param string $file		Name der Datei inkl. Erweiterung
+	 * @param string $path      Pfad zur Datei. Optional, wenn leer wird der Standardpfad des Controllers verwendet.
 	 */
-	public function setViewFile($file)
+	public function setViewFile($file, $path = null)
 	{
-		$this->file	= $file;
+	    if(is_null($path))
+	    {
+	        $this->file    = $this->getViewDir()."/".$file;
+	    }
+	    else 
+	    {
+	        $this->file	= $file;
+	    }
 	}
 	
 	/**
@@ -193,7 +201,7 @@ abstract class AbstractView
 	{
 		if(empty($this->file))
 		{
-			$this->setViewFile($this->getTemplatePath());
+			$this->file  = $this->getTemplatePath();
 		}
 		if(file_exists($this->file))
 		{

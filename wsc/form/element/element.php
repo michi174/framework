@@ -255,6 +255,7 @@ class Element implements ElementInterface
 	public function setData($data)
 	{
 	    $this->data    = $data;
+	    $this->writeAutoValue();
 	    return $this;
 	}
 	

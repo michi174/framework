@@ -6,6 +6,7 @@ use wsc\validator\ValidatorInterface;
 use wsc\validator\ValidatorFactory;
 use wsc\form\element\ElementInterface;
 use wsc\application\Application;
+use wsc\database\Database;
 
 /**
  * Die Form Klasse bietet die Funktionen um HTML Formen zu erzeugen, deren Eingabe zu Filtern
@@ -21,6 +22,10 @@ class Form implements FormInterface
     const DB_DELETE = "delete";
     const DB_SELECT = "select";
     
+    /**
+     * 
+     * @var Database
+     */
     private $database   = null;
     /**
      * Enthält die Attribute der Form
@@ -393,7 +398,60 @@ class Form implements FormInterface
      */
     public function setUpdateID($db_field, $value)
     {
-        $this->update_id[$db_field] = $value;
+        $this->update_id['db_field']    = $db_field;
+        $this->update_id['value']       = $value;
+        
+        $id         = $value;
+        $db_results = array();
+        $depends    = array();
+        
+        foreach ($this->dependQueries as $table => $fields)
+        {
+            $sql    = "SELECT * FROM ".$table." WHERE ".$fields['masterIdTableField']."='".$value."' LIMIT 1";
+            $res    = $this->database->query($sql);
+            
+            $row[$table]    = $res->fetch_assoc();
+        }
+        
+        if(!empty($value))
+        {
+            $this->update_id[$db_field] = $value;
+            
+            $sql    = "SELECT * FROM ". $this->default_table . " WHERE " . $db_field . " = '".$value."'";
+            $res    = $this->database->query($sql) or die($this->database->error. " on ".__FILE__.__LINE__);
+            
+            if($res->num_rows > 0)
+            {
+                $row[$this->default_table]    = $res->fetch_assoc();
+                foreach ($row as $table => $fields)
+                {
+                    foreach ($fields as $field => $value)
+                    {                    
+                        foreach ($this->elements as $element)
+                        {
+                            $element_name   = $element->getAttribute("name");
+                            $element_field  = $element->getTableField();
+                    
+                            if($field == $element_field)
+                            {
+                                $element->setData(utf8_encode($value));
+                                break;
+                            }
+                        }
+                    }
+                } 
+            }
+            else
+            {
+                echo "Es wurde eine ungueltige Update ID uebergeben.";
+            }
+            
+        }
+        else
+        {
+            echo "Es wurde keine Update ID uebergeben.";
+        }
+
     }
     
     /**
@@ -417,7 +475,7 @@ class Form implements FormInterface
         }
         else
         {
-            echo "unbekannte DB Modus ausgewaehlt.";
+            echo "unbekannter DB Modus ausgewaehlt.";
         }
     }
     
@@ -451,6 +509,7 @@ class Form implements FormInterface
     
     /**
      * Bildet den SQL Querystring für die Elemente, die in die Datenbank eingetragen werden sollen.
+     * 
      * @param string $method   Methode, die angewandt werden soll. (insert, update, delete)
      * @param string $query    Name der Abfrage = Name der Tabelle
      * @param array $fields['DB Feld']['Einzutragender Wert']
@@ -458,9 +517,10 @@ class Form implements FormInterface
      */
     private function createQuery($method, $query, $fields)
     {
-        $table     = $query;
-        $data      = $fields;
-        $statement = "";
+        $table      = $query;
+        $data       = $fields;
+        $num_fields = count($data);
+        $statement  = "";
     
         switch($method)
         {
@@ -507,7 +567,7 @@ class Form implements FormInterface
     
         	    foreach ($data as $value)
         	    {
-        	        $statement  .= "'" . $value . "'";
+        	        $statement  .= "'" . utf8_decode($value) . "'";
     
         	        if($loops < $num_fields)
         	        {
@@ -522,9 +582,36 @@ class Form implements FormInterface
         	    break;
     
         	case self::DB_UPDATE:
+        	    
+        	    $statement = "";
+        	    $loops     = 1;
+        	    
+        	    $statement .= "UPDATE " . $table ." SET ";
+        	    
+        	    //die(var_dump($data));
+        	    
+        	    foreach ($data as $db_field => $value)
+        	    {
+        	        $statement .= $db_field . " = '" .utf8_decode($value). "'";
+        	        
+        	        //Dem Statement ein Komma anhängen, wenn noch weitere Felder hinzugefügt werden
+        	        if($loops < $num_fields)
+        	        {
+        	            $statement  .= ", ";
+        	        }
+        	        
+        	        $loops  += 1;
+        	    }
+        	    
+        	    $update_db_field   = (array_key_exists($query, $this->dependQueries)) ? $this->dependQueries[$table]['masterIdTableField'] : $this->update_id['db_field'];
+        	    
+        	    $statement .= " WHERE " . $update_db_field . " = '" . $this->update_id['value'] . "'";
+        	            	    
         	    break;
     
         	case self::DB_DELETE:
+        	    $update_db_field   = (array_key_exists($query, $this->dependQueries)) ? $this->dependQueries[$table]['masterIdTableField'] : $this->update_id['db_field'];
+        	    $statement = "DELETE FROM " . $table . " WHERE " . $update_db_field . "='" . $this->update_id['value'] . "'";
         	    break;
     
         }
@@ -560,23 +647,32 @@ class Form implements FormInterface
      */
     public function executeDatabase()
     {
-        $this->openQueries  = $this->getDBDataFromElements();
-        $db_data_manual     = $this->getManualDBData();
-         
-        //Manuelle DB Felder zu den offenen Queries hinzufügen
-        foreach ($db_data_manual as $table =>  $data_manual)
-        {
-            foreach ($data_manual as $field => $value)
-            {
-                $this->openQueries[$table][$field]  = $value;
-            }
-        }
+        $this->setOpenQueries();
         //Zuerst alle Queries ausführen, die von keinem anderen Query abhängig sind...
         $this->runOpenQueries(false);
         //...dann alle verbleibenden Queries ausführen (mit Abhängigkeit).
         $this->runOpenQueries(true);
          
         return true;
+    }
+    
+    private function setOpenQueries()
+    {
+        $this->openQueries  = $this->getDBDataFromElements();
+        
+        if($this->db_mod == self::DB_INSERT)
+        {
+            $db_data_manual     = $this->getManualDBData();
+            
+            //Manuelle DB Felder zu den offenen Queries hinzufügen
+            foreach ($db_data_manual as $table =>  $data_manual)
+            {
+                foreach ($data_manual as $field => $value)
+                {
+                    $this->openQueries[$table][$field]  = $value;
+                }
+            }
+        }
     }
     
     /**

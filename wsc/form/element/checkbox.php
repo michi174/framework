@@ -31,11 +31,13 @@ class Checkbox extends Element
      */
     public function setData($data)
     {
+        parent::setData($data);
+        
         if($data == "on")
         {
             $this->data = 1;
         }
-        else   
+        if($data == "off")
         {
             $this->data = 0;
         }
