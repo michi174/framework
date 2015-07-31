@@ -525,7 +525,6 @@ class Form implements FormInterface
         switch($method)
         {
         	case self::DB_INSERT:
-    
         	    $statement  .= "INSERT INTO " . $table . " (";
     
         	    $loops  = 1;
@@ -545,14 +544,14 @@ class Form implements FormInterface
         	    }
         	    else
         	    {
-        	        //DEBUG: echo "Es wurde die unabhaengige Abfrage ". $query ." bearbeitet.<br>";
+        	        //DEBUG:: echo "Es wurde die unabhaengige Abfrage ". $query ." bearbeitet.<br>";
         	    }
         	     
         	    $num_fields = count($data);
         	     
         	    foreach ($data as $field => $value)
         	    {
-        	        $statement  .= "" . $field . "";
+        	        $statement  .= "`" . $field . "`";
     
         	        if($loops < $num_fields)
         	        {
@@ -567,7 +566,7 @@ class Form implements FormInterface
     
         	    foreach ($data as $value)
         	    {
-        	        $statement  .= "'" . utf8_decode($value) . "'";
+        	        $statement  .= "'" . $this->database->real_escape_string(utf8_decode($value)) . "'";
     
         	        if($loops < $num_fields)
         	        {
@@ -592,7 +591,7 @@ class Form implements FormInterface
         	    
         	    foreach ($data as $db_field => $value)
         	    {
-        	        $statement .= $db_field . " = '" .utf8_decode($value). "'";
+        	        $statement .= $db_field . " = '" .$this->database->real_escape_string(utf8_decode($value)). "'";
         	        
         	        //Dem Statement ein Komma anhängen, wenn noch weitere Felder hinzugefügt werden
         	        if($loops < $num_fields)
@@ -628,9 +627,9 @@ class Form implements FormInterface
     {
         if($this->database !== null)
         {
-            //DEBUG: echo $statement. " wird jetzt ausgefuehrt...<br>";
+            //DEBUG: echo $this->database->real_escape_string($statement). " wird jetzt ausgefuehrt...<br>";
              
-            $res     = $this->database->query($statement) or die($this->database->error);
+            $res     = $this->database->query($statement)or die("<br> ".$this->database->error);
             $result  = array("result"    => $res, "database"   => $this->database);
             $this->executedQueries[$table] = $result;
         }

@@ -253,7 +253,7 @@ class Element implements ElementInterface
 	 * @see \wsc\form\element\ElementInterface::setData()
 	 */
 	public function setData($data)
-	{
+	{	
 	    $this->data    = $data;
 	    $this->writeAutoValue();
 	    return $this;
